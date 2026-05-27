@@ -39,6 +39,7 @@ _garbage/
 *.pbz2
 
 *.zip
+!pretrained/*.zip
 
 # Logs & outputs
 logs/
