@@ -49,10 +49,10 @@ ego_training:
   exploration_initial_eps: 1.0
   exploration_final_eps: 0.01  # tighter final policy vs. 0.05 demo default
   # Reward shaping — designed for safe + fast driving
-  collision_reward: -3.0       # was -2.0 → strengthened: safety must clearly dominate speed gain
-  lane_change_reward: -0.1     # unchanged: discourages jittery left-right-left behaviour
-  high_speed_reward: 0.1       # was 0.3 → 0.2 → 0.1: ego still at max speed 99% of time
-  right_lane_reward: 0.1       # added: encourages slower right lane, reduces fast-lane racing
+  collision_reward: -3.0
+  lane_change_reward: -0.2
+  high_speed_reward: 0.1
+  right_lane_reward: 0.0
 
 diversity:
   dist_bins: 10
