@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Folders
+runs/
+bin/
+_garbage/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data & model artifacts
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.svg
+
+*.pt
+*.pth
+*.h5
+*.ckpt
+
+*.npz
+*.npy
+*.pkl
+*.joblib
+*.pbz2
+
+*.zip
+
+# Logs & outputs
+logs/
+outputs/
+wandb/
+tensorboard/
+*.log
+
+# OS / IDE cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Training artifacts
+checkpoints/
+evals/
+mlruns/
+baas.egg-info/
+
+# Local notes
+*.md
+
+# Tests
+baas/tests/

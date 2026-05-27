@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "baas"
+version = "0.1.0"
+description = "BAAS: Benchmarking Adversarial Agent Strategies for safety-critical scenario generation"
+requires-python = ">=3.10"
+dependencies = [
+    "gymnasium>=0.29.1",
+    "highway-env>=1.9.1",
+    "stable-baselines3>=2.3.2",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "ribs>=0.6.0",
+    "imageio>=2.28.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "tensorboard>=2.14.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["baas*"]
+
+[tool.pytest.ini_options]
+testpaths = ["baas/tests"]
