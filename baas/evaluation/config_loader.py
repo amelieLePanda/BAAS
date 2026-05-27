@@ -18,10 +18,8 @@ import yaml
 
 from baas.adapters.highway_env.config import HighwayEnvBenchmarkConfig
 from baas.core.metrics import IncidentThresholds
-from baas.methods.cma_es.config import CMAESConfig
 from baas.methods.king_light.config import KingLightConfig
 from baas.methods.map_elites.search import MapElitesConfig
-from baas.methods.novelty_search.config import NoveltySearchConfig
 from baas.methods.parameter_sweep.config import ParameterSweepConfig
 from baas.methods.ppo_adversary.config import PPOAdvConfig
 from baas.methods.qdrl.config import QDRLConfig
@@ -36,8 +34,6 @@ class BenchmarkConfigBundle:
     ego_training: EgoTrainConfig
     map_elites: MapElitesConfig
     ppo_adversary: PPOAdvConfig
-    cma_es: CMAESConfig
-    novelty_search: NoveltySearchConfig
     qdrl: QDRLConfig
     king_light: KingLightConfig
     parameter_sweep: ParameterSweepConfig
@@ -59,8 +55,6 @@ def config_from_dict(raw: Dict[str, Any]) -> BenchmarkConfigBundle:
     div_raw = raw.get("diversity", {})
     me_raw = raw.get("map_elites", {})
     ppo_raw = raw.get("ppo_adversary", {})
-    cma_raw = raw.get("cma_es", {})
-    ns_raw = raw.get("novelty_search", {})
     qdrl_raw = raw.get("qdrl", {})
     king_raw = raw.get("king_light", {})
     ps_raw = raw.get("parameter_sweep", {})
@@ -128,21 +122,6 @@ def config_from_dict(raw: Dict[str, Any]) -> BenchmarkConfigBundle:
         r_critical=ppo_raw.get("r_critical", 1.5),
         r_adv_crash_close=ppo_raw.get("r_adv_crash_close", -1.0),
         r_adv_crash_nuisance=ppo_raw.get("r_adv_crash_nuisance", -6.0),
-    )
-
-    cma_es = CMAESConfig(
-        n_adversaries=cma_raw.get("n_adversaries", 1),
-        popsize=cma_raw.get("popsize", 20),
-        sigma0=cma_raw.get("sigma0", 0.5),
-        n_generations=cma_raw.get("n_generations", 200),
-    )
-
-    novelty_search = NoveltySearchConfig(
-        n_adversaries=ns_raw.get("n_adversaries", 1),
-        pop_size=ns_raw.get("pop_size", 50),
-        n_generations=ns_raw.get("n_generations", 200),
-        k_nearest=ns_raw.get("k_nearest", 10),
-        archive_prob=ns_raw.get("archive_prob", 0.2),
     )
 
     qdrl_grid: List[int] = qdrl_raw.get("archive_grid_dims", [25, 25])
@@ -223,8 +202,6 @@ def config_from_dict(raw: Dict[str, Any]) -> BenchmarkConfigBundle:
         ego_training=ego_training,
         map_elites=map_elites,
         ppo_adversary=ppo_adversary,
-        cma_es=cma_es,
-        novelty_search=novelty_search,
         qdrl=qdrl,
         king_light=king_light,
         parameter_sweep=parameter_sweep,
