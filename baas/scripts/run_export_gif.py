@@ -136,7 +136,7 @@ def main() -> None:
         _save_gif(failure_frames, out, args.fps)
         _save_gif(failure_frames, out.with_stem(out.stem + "_slow"), args.slow_fps)
     else:
-        logger.error("Could not find a crash episode — try increasing --max-seeds")
+        logger.error("Could not find a crash episode - try increasing --max-seeds")
 
     if success_frames:
         out = Path(args.output)

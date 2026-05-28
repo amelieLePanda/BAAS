@@ -112,7 +112,7 @@ def _dry_run_all_vehicles(
     """Run episode without rendering.
 
     Tracks every non-ego vehicle that ever appears (including mid-episode spawns)
-    using object references as keys — no id() to avoid GC/reuse bugs.
+    using object references as keys - no id() to avoid GC/reuse bugs.
 
     Returns (crash_step, records) where records lists every vehicle with its
     first-appearance step/position and whether it was a crash candidate.

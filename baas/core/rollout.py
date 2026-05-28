@@ -27,9 +27,9 @@ from baas.core.types import EpisodeResult, RolloutSpec
 
 logger = logging.getLogger(__name__)
 
-_EGO_COLOUR = (50, 200, 0)    # green — matches highway-env default ego colour
+_EGO_COLOUR = (50, 200, 0)    # green - matches highway-env default ego colour
 _ADV_COLOUR = (225, 225, 0)   # yellow
-_TRAFFIC_COLOUR = (100, 200, 255)  # blue — highway-env default for IDM traffic
+_TRAFFIC_COLOUR = (100, 200, 255)  # blue - highway-env default for IDM traffic
 
 AdvController = Callable[[Any], int]
 

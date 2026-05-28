@@ -68,7 +68,7 @@ def main() -> None:
     logger.info("Optimising on rollout_index=%d  env_seed=%d", opt_spec.rollout_index, opt_spec.env_seed)
     opt_result = run_king_light(opt_spec, adapter, ego, bundle.thresholds, kl_cfg, env_cfg=bundle.env)
 
-    # adv_actions_idx is (T, N_adv) from optimiser — wrap as per-adversary flat list
+    # adv_actions_idx is (T, N_adv) from optimiser - wrap as per-adversary flat list
     raw_seqs = opt_result["adv_actions_idx"]  # list of T lists, each [action_for_adv_0]
     adv_seqs = [[step[0] for step in raw_seqs]]  # [[a0, a1, ..., aT]] for adversary 0
 

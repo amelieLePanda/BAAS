@@ -1,10 +1,10 @@
-"""Parameter sweep baseline — single adversary only.
+"""Parameter sweep baseline - single adversary only.
 
 Tries every (dx, dy, dv) combination from a grid by repositioning a background
 vehicle after reset and letting it drive freely with IDM/MOBIL behaviour. The
 ego is controlled by its policy as normal. The worst outcome per rollout is kept.
 
-Not comparable to QD methods on diversity metrics — useful as a naive worst-case
+Not comparable to QD methods on diversity metrics - useful as a naive worst-case
 baseline only.
 """
 from __future__ import annotations

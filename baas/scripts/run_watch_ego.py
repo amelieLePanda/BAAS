@@ -1,7 +1,7 @@
 """Watch a trained ego policy drive live in the highway-env window.
 
 Runs N episodes with human rendering so you can visually assess behaviour.
-No adversaries — baseline driving quality only.
+No adversaries - baseline driving quality only.
 
 Usage:
     python baas/scripts/run_watch_ego.py \\

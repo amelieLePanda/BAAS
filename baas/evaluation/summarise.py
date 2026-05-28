@@ -18,7 +18,7 @@ from baas.evaluation.diversity import (
 
 logger = logging.getLogger(__name__)
 
-# Default phi grid config — matches benchmark_v1.yaml diversity section.
+# Default phi grid config - matches benchmark_v1.yaml diversity section.
 _DEFAULT_PHI_CFG = PhiGridConfig(dist_bins=10, ttci_bins=10, dist_max=60.0, horizon_steps=240)
 _FRECHET_DOWNSAMPLE = 30  # steps used for Fréchet / dispersion (matches runner.py default)
 
@@ -56,7 +56,7 @@ def _extract_rel_trajectories(rollouts: List[Dict[str, Any]]) -> List[np.ndarray
     """Extract ego-relative adversary trajectories from rollout dicts.
 
     Uses the downsampled traces stored by save_results (ego_trace_ds / adv_traces_ds).
-    Returns a flat list of (T, 2) ego-relative trajectories — one per adversary per rollout.
+    Returns a flat list of (T, 2) ego-relative trajectories - one per adversary per rollout.
     """
     trajs: List[np.ndarray] = []
     for r in rollouts:
@@ -139,13 +139,13 @@ def aggregate_method(
     frechet = compute_frechet_diversity(rel_trajs, downsample_to=frechet_downsample_to)
 
     result: Dict[str, Any] = {
-        # Effectiveness — adversary-caused (primary paper metrics)
+        # Effectiveness - adversary-caused (primary paper metrics)
         "n_rollouts":           n,
         "p_collision":          round(p_collision, 4),
         "p_critical_adv":       round(p_critical_adv, 4),
         "mean_ttci_adv_steps":  round(float(np.mean(ttci_adv_vals)), 2) if ttci_adv_vals else None,
         "mean_min_dist_adv":    round(float(np.mean(dist_vals)), 3) if dist_vals else None,
-        # Effectiveness — any vehicle (includes background traffic, context only)
+        # Effectiveness - any vehicle (includes background traffic, context only)
         "p_critical_any":       round(p_critical, 4),
         "mean_ttci_any_steps":  round(float(np.mean(ttci_vals)), 2) if ttci_vals else None,
         # Realism
@@ -200,8 +200,8 @@ def summarise_runs(
 # require trace data and may be absent for older result files.
 _MAIN_METRICS: List[Tuple[str, str]] = [
     ("p_collision",         "p_coll"),
-    ("p_critical_adv",      "p_crit_adv"),   # adversary-caused — primary metric
-    ("mean_ttci_adv_steps", "TTCI_adv"),     # adversary-caused TTCI — primary metric
+    ("p_critical_adv",      "p_crit_adv"),   # adversary-caused - primary metric
+    ("mean_ttci_adv_steps", "TTCI_adv"),     # adversary-caused TTCI - primary metric
     ("p_critical_any",      "p_crit_any"),   # includes background traffic (context)
     ("mean_ttci_any_steps", "TTCI_any"),
     ("mean_min_dist_adv",   "min_d_adv"),

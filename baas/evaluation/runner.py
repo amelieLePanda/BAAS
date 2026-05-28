@@ -144,7 +144,7 @@ def evaluate_artefact(
 
     make_controllers is called fresh per rollout so controllers are stateless
     across episodes. stop_on_critical=False (default) runs full episodes so
-    adversaries get to act — critical_any from background traffic no longer
+    adversaries get to act - critical_any from background traffic no longer
     terminates the episode prematurely. Set n_feasibility_reruns > 0 to
     estimate feasibility and difficulty label for each result.
     """

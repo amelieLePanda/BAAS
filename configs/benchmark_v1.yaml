@@ -1,11 +1,11 @@
-# MADS Benchmark v1 — single source of truth for all experiments.
+# MADS Benchmark v1 - single source of truth for all experiments.
 # Load with: yaml.safe_load(Path("configs/benchmark_v1.yaml").read_text())
 # This file is embedded verbatim in every output JSON for reproducibility.
 
 env:
   env_id: "highway-v0"
-  policy_frequency: 2          # Hz — must match ego training frequency
-  simulation_frequency: 15     # Hz — physics steps per second
+  policy_frequency: 2          # Hz - must match ego training frequency
+  simulation_frequency: 15     # Hz - physics steps per second
   horizon_steps: 240           # policy steps = 120 s at policy_frequency=2
   background_traffic: 6
   vehicles_density: 1.0
@@ -23,9 +23,9 @@ perturbation:
   adv_dv_eps: 1.0
 
 incident:
-  critical_dist: 6.0           # metres — hard proximity gate
-  nuisance_dist: 12.0          # metres — nuisance crash threshold
-  ttc_crit_s: 1.5              # seconds — TTC threshold for critical incident
+  critical_dist: 6.0           # metres - hard proximity gate
+  nuisance_dist: 12.0          # metres - nuisance crash threshold
+  ttc_crit_s: 1.5              # seconds - TTC threshold for critical incident
   dx_near_m: 5.0
   dy_near_m: 1.0
   v_stop_mps: 1.0
@@ -36,7 +36,7 @@ feasibility:
   n_feasibility_reruns: 10     # reruns per scenario to estimate feasibility
 
 ego_training:
-  # DQN hyperparameters — proven settings for CNN ego on highway-env
+  # DQN hyperparameters - proven settings for CNN ego on highway-env
   learning_rate: 0.0005        # constant (no decay)
   buffer_size: 15000
   learning_starts: 200
@@ -48,16 +48,16 @@ ego_training:
   exploration_fraction: 0.7
   exploration_initial_eps: 1.0
   exploration_final_eps: 0.01  # tighter final policy vs. 0.05 demo default
-  # Reward shaping — designed for safe + fast driving
+  # Reward shaping - designed for safe + fast driving
   collision_reward: -3.0
-  lane_change_reward: -0.2
+  lane_change_reward: -0.1
   high_speed_reward: 0.1
-  right_lane_reward: 0.0
+  right_lane_reward: 0.1
 
 diversity:
   dist_bins: 10
   ttci_bins: 10
-  dist_max: 60.0               # metres — max dist for φ-space grid
+  dist_max: 60.0               # metres - max dist for φ-space grid
   frechet_downsample_to: 30    # trajectory length for Fréchet computation
 
 map_elites:

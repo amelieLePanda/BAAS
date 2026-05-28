@@ -154,7 +154,7 @@ def _make_controllers_mappo_lidar(artefact_path: Path, n_adversaries: int, devic
 def _make_controllers_maddpg(artefact_path: Path, n_adversaries: int, device: str = "cpu") -> Callable:
     """Load a MADDPG .pt checkpoint and build N decentralised controllers.
 
-    Each Actor_i acts on its local obs independently — no shared joint buffer needed.
+    Each Actor_i acts on its local obs independently - no shared joint buffer needed.
     """
     import torch
     from baas.methods.maddpg_adversary.networks import Actor

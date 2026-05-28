@@ -2,7 +2,7 @@
 
 policy_frequency=2 must match the evaluation environment exactly.
 All DQN hyperparameters and reward settings come from the benchmark YAML
-via EgoTrainConfig — no hardcoded values outside this dataclass.
+via EgoTrainConfig - no hardcoded values outside this dataclass.
 """
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ class EgoTrainConfig:
     exploration_final_eps: float = 0.01
 
     # Reward shaping
-    collision_reward: float = -3.0   # was -2.0
+    collision_reward: float = -3.0
     lane_change_reward: float = -0.1
-    high_speed_reward: float = 0.1   # was 0.3 → 0.2 → 0.1
-    right_lane_reward: float = 0.1   # added: encourages right lane, reduces fast-lane racing
+    high_speed_reward: float = 0.1
+    right_lane_reward: float = 0.1

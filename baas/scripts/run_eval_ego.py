@@ -1,4 +1,4 @@
-"""Systematic ego policy evaluation — baseline driving quality without adversaries.
+"""Systematic ego policy evaluation - baseline driving quality without adversaries.
 
 Runs k episodes from varied seeds and reports the metrics you need to decide
 whether the ego is good enough to freeze for adversarial benchmarking, and to
@@ -158,7 +158,7 @@ def _cmd_eval(args: argparse.Namespace) -> None:
         print(f"  {k:<28} {v}")
     print("-" * 50)
     if failures:
-        print("  NOT READY — failed criteria:")
+        print("  NOT READY - failed criteria:")
         for f in failures:
             print(f"    x {f}")
         print("  → Retrain with more steps or adjust hyperparameters.")

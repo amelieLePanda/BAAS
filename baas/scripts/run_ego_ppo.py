@@ -27,7 +27,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train ego PPO policy")
     parser.add_argument("--config", required=True, type=Path,
-                        help="Benchmark YAML — single source of truth for env settings")
+                        help="Benchmark YAML - single source of truth for env settings")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--total-steps", type=int, default=300_000)
     parser.add_argument("--seed", type=int, default=0)
