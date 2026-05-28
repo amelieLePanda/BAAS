@@ -62,7 +62,7 @@ diversity:
 
 map_elites:
   n_adversaries: 1
-  n_iterations: 5000
+  n_iterations: 10000
   batch_size: 30
   n_blocks: 20
   block_size: 3
@@ -78,7 +78,7 @@ cma_es:
 
 ppo_adversary:
   n_adversaries: 1
-  total_timesteps: 500000
+  total_timesteps: 1000000
   lr: 0.0003
   gamma: 0.99
   gae_lambda: 0.95
@@ -102,14 +102,14 @@ novelty_search:
 
 qdrl:
   n_adversaries: 1
-  n_iters: 60
+  n_iters: 120
   n_emitters: 4
   emitter_batch_size: 2
   sigma0: 0.8
   snapshot_every: 5
   archive_grid_dims: [25, 25]
   dist_range: [0.0, 50.0]
-  burst_steps: 50000
+  burst_steps: 100000
   n_envs: 1
   eval_rollouts: 6
   r_critical_range: [1.0, 2.0]
