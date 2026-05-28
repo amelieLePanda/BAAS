@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+import gymnasium
 import numpy as np
 
 from baas.core.ego_policy import EgoPolicy
@@ -25,7 +26,7 @@ def _distance(v1: Any, v2: Any) -> float:
     return float(np.hypot(dx, dy))
 
 
-class AdversaryVsEgoEnv:
+class AdversaryVsEgoEnv(gymnasium.Env):
     """Custom Gymnasium env exposing only the adversary's obs/action space.
 
     Internally runs two controlled vehicles in highway-env:
@@ -52,8 +53,7 @@ class AdversaryVsEgoEnv:
         r_adv_crash_close: Optional[float] = None,
         r_adv_crash_nuisance: Optional[float] = None,
     ) -> None:
-        import gymnasium as gym
-
+        super().__init__()
         self._adapter = adapter
         self._ego_policy = ego_policy
         self._cfg = cfg
@@ -79,7 +79,7 @@ class AdversaryVsEgoEnv:
         # This avoids giving the adversary grayscale frames (which its MlpPolicy cannot use).
         _N_OBS_VEHICLES = 5
         _N_FEATURES = 5
-        self.observation_space = gym.spaces.Box(
+        self.observation_space = gymnasium.spaces.Box(
             low=-np.inf,
             high=np.inf,
             shape=(_N_OBS_VEHICLES * _N_FEATURES,),
