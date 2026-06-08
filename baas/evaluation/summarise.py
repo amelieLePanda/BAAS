@@ -255,7 +255,7 @@ def to_latex(summary: Dict[str, Dict[str, Any]]) -> str:
     lines += [
         r"\bottomrule",
         r"\end{tabular}",
-        r"\caption{MADS benchmark: effectiveness and realism}",
+        r"\caption{BAAS benchmark: effectiveness and realism}",
         r"\end{table}",
     ]
     return "\n".join(lines)
@@ -279,7 +279,7 @@ def to_latex_diversity(summary: Dict[str, Dict[str, Any]]) -> str:
     lines += [
         r"\bottomrule",
         r"\end{tabular}",
-        r"\caption{MADS benchmark: diversity metrics}",
+        r"\caption{BAAS benchmark: diversity metrics}",
         r"\end{table}",
     ]
     return "\n".join(lines)
@@ -293,6 +293,58 @@ def to_csv(summary: Dict[str, Dict[str, Any]]) -> str:
         vals = [method] + [str(stats.get(key, "")) for key, _ in _ALL_METRICS]
         rows.append(",".join(vals))
     return "\n".join(rows)
+
+
+def summarise_multiseed(
+    per_seed_summaries: List[Dict[str, Dict[str, Any]]],
+) -> Dict[str, Dict[str, Any]]:
+    """Aggregate per-seed summaries into mean ± std statistics.
+
+    Each element of per_seed_summaries is the output of summarise_runs() for one
+    seed. Returns a dict keyed by method with "_mean" and "_std" variants for
+    every numeric metric. Methods absent in a given seed are skipped for that seed.
+
+    Usage:
+        seed_summaries = [summarise_runs(load_results_dir(d)) for d in seed_dirs]
+        multi = summarise_multiseed(seed_summaries)
+        save_summary(multi, output_dir, tag="_multiseed")
+    """
+    all_methods: set = set()
+    for s in per_seed_summaries:
+        all_methods.update(s.keys())
+
+    result: Dict[str, Dict[str, Any]] = {}
+    for method in sorted(all_methods):
+        # Collect per-seed stats dicts for this method (skip seeds where absent)
+        seed_stats: List[Dict[str, Any]] = [
+            s[method] for s in per_seed_summaries if method in s and s[method]
+        ]
+        if not seed_stats:
+            continue
+
+        numeric_keys = [
+            k for k in seed_stats[0]
+            if isinstance(seed_stats[0][k], (int, float)) and seed_stats[0][k] is not None
+        ]
+
+        combined: Dict[str, Any] = {"n_seeds": len(seed_stats)}
+        for key in numeric_keys:
+            vals = [s[key] for s in seed_stats if s.get(key) is not None and np.isfinite(float(s[key]))]
+            if not vals:
+                combined[f"{key}_mean"] = None
+                combined[f"{key}_std"] = None
+            else:
+                combined[f"{key}_mean"] = round(float(np.mean(vals)), 4)
+                combined[f"{key}_std"] = round(float(np.std(vals, ddof=0)), 4)
+
+        # Pass through non-numeric fields from the first seed (e.g. difficulty_dist)
+        for key, val in seed_stats[0].items():
+            if key not in numeric_keys:
+                combined.setdefault(key, val)
+
+        result[method] = combined
+
+    return result
 
 
 def save_summary(

@@ -23,6 +23,7 @@ _garbage/
 *.jpg
 *.jpeg
 *.gif
+!gifs/*.gif
 *.bmp
 *.tiff
 *.svg
@@ -62,6 +63,7 @@ baas.egg-info/
 
 # Local notes
 *.md
+!README.md
 
 # Tests
 baas/tests/

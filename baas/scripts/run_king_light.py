@@ -42,6 +42,9 @@ def main() -> None:
     from baas.evaluation.runner import action_seq_controllers, evaluate_artefact, save_results
     from baas.methods.king_light.optimiser import run_king_light
 
+    import torch
+    torch.manual_seed(args.seed)
+
     bundle = load_config(args.config)
     kl_cfg = bundle.king_light
     if args.device is not None:

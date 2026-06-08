@@ -41,6 +41,8 @@ def main() -> None:
     ego = DQNEgoPolicy(str(args.ego_policy))
 
     args.output.mkdir(parents=True, exist_ok=True)
+    n_feasibility_reruns = bundle.raw.get("feasibility", {}).get("n_feasibility_reruns", 0)
+
     run_parameter_sweep(
         specs=specs,
         adapter=adapter,
@@ -51,6 +53,7 @@ def main() -> None:
         output_dir=args.output,
         config=bundle.raw,
         config_sha1=config_sha1,
+        n_feasibility_reruns=n_feasibility_reruns,
     )
 
 

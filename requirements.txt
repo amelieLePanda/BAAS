@@ -6,6 +6,7 @@ torchvision==0.23.0
 
 # RL algorithms
 stable-baselines3==2.3.2
+ribs==0.11.0
 
 # Environments
 gymnasium==0.29.1               # IMPORTANT: compatible with SB3

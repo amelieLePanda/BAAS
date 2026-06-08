@@ -96,12 +96,16 @@ def estimate_feasibility(
     *,
     env_cfg: Any = None,
     n_reruns: int = 10,
+    post_reset_fn: Any = None,
 ) -> tuple:
     """Estimate feasibility for one scenario.
 
     Replays the same adversary n_reruns times with varied ego env seeds.
     Returns (feasibility, difficulty_label) where feasibility is the fraction of
     reruns in which the ego survives.
+
+    post_reset_fn: optional callable passed to run_episode — used by parameter
+    sweep to reposition the background vehicle after each env reset.
     """
     survived = 0
     for i in range(n_reruns):
@@ -118,6 +122,7 @@ def estimate_feasibility(
                 thresholds=thresholds,
                 env_cfg=env_cfg,
                 stop_on_critical=False,
+                post_reset_fn=post_reset_fn,
             )
             if not result.metrics.ego_collision and result.metrics.ego_offroad is not True:
                 survived += 1

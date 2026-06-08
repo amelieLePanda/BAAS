@@ -8,7 +8,11 @@ combination of reward shaping values. The solution space is:
 MAP-Elites evolves these values using CMA-ME (EvolutionStrategyEmitter from
 pyribs). For each candidate, a PPO adversary is trained for burst_steps
 timesteps inside AdversaryVsEgoEnv with the given reward params, then
-evaluated on a subset of rollout specs to get fitness and phi = (min_dist, TTCI).
+evaluated on a subset of rollout specs to get fitness and
+phi = (min_dist_ego_adv / dist_max, TTCI_adv / horizon)  in [0,1]^2.
+
+The archive uses a 10x10 normalised grid identical to MAP-Elites, so
+Table 3 (archive-level diversity) is a like-for-like comparison.
 """
 from __future__ import annotations
 
@@ -30,36 +34,45 @@ from baas.methods.qdrl.config import QDRLConfig
 
 logger = logging.getLogger(__name__)
 
+_DIST_MAX_DEFAULT = 60.0  # metres — matches MAP-Elites and benchmark_v1.yaml diversity.dist_max
 
-def _score(result: EpisodeResult, *, horizon: int, nuisance_dist: float) -> float:
+
+def _score(result: EpisodeResult) -> float:
     """Objective to maximise.
 
-    +1.25 for critical incident + collision, +1.0 for critical only.
-    Time bonus: earlier incidents score higher.
-    Nuisance penalty: adversary crashes far from ego with no critical incident.
+    Matches paper Eq. (6) and MAP-Elites _fitness exactly:
+      +1.0 for critical incident, +0.5 for ego collision, -0.5 for nuisance crash.
+    Uses adv_nuisance_crash flag (set by run_episode) rather than an inline
+    distance check, keeping the definition identical to MAP-Elites.
     """
     m = result.metrics
-    crit = 1.0 if m.critical_incident else 0.0
-    col = 0.25 if m.ego_collision else 0.0
-
-    ttc = float(m.time_to_critical_incident_steps)
-    ttc = float(np.clip(ttc, 0, horizon))
-    time_bonus = (float(horizon) - ttc) / float(horizon)
-
-    nuisance = 0.0
-    if m.adv_crashed and not m.ego_collision and not m.critical_incident:
-        if np.isfinite(m.min_dist_ego_adv) and m.min_dist_ego_adv > nuisance_dist:
-            nuisance = 1.0
-
-    return (crit + col) + (0.5 * time_bonus) - (0.5 * nuisance)
+    f = 0.0
+    if m.critical_incident:
+        f += 1.0
+    if m.ego_collision:
+        f += 0.5
+    if m.adv_nuisance_crash:
+        f -= 0.5
+    return f
 
 
-def _measures(result: EpisodeResult, *, horizon: int) -> Tuple[float, float]:
-    """Behaviour descriptor phi = (min_dist_ego_adv, TTCI steps)."""
+def _measures(
+    result: EpisodeResult,
+    *,
+    horizon: int,
+    dist_max: float = _DIST_MAX_DEFAULT,
+) -> Tuple[float, float]:
+    """Behaviour descriptor phi in [0,1]^2 — identical to MAP-Elites _behaviour_descriptor.
+
+    Uses time_to_critical_incident_adv_steps (TTCI_adv), not TTCI_any, so the
+    archive axes match MAP-Elites and Table 3 is a valid comparison.
+    """
     m = result.metrics
-    d = float(m.min_dist_ego_adv) if np.isfinite(m.min_dist_ego_adv) else float("inf")
-    t = float(np.clip(m.time_to_critical_incident_steps, 0, horizon))
-    return d, t
+    d = float(m.min_dist_ego_adv) if np.isfinite(m.min_dist_ego_adv) else dist_max
+    ttci = float(m.time_to_critical_incident_adv_steps)
+    d_norm = float(np.clip(d, 0.0, dist_max) / dist_max)
+    ttci_norm = float(np.clip(ttci, 1.0, horizon) / horizon)
+    return d_norm, ttci_norm
 
 
 def _train_burst(
@@ -145,19 +158,19 @@ def _eval_policy(
     env_cfg: Any,
     cfg: QDRLConfig,
     rng: np.random.Generator,
+    dist_max: float = _DIST_MAX_DEFAULT,
 ) -> Dict[str, Any]:
     """Run a subset of rollout specs with the given PPO adversary.
 
-    Returns objective, phi measures, and a summary dict.
+    Returns objective, phi measures (normalised [0,1]^2), and a summary dict.
     """
     from stable_baselines3 import PPO
 
     ppo = PPO.load(str(policy_path), device=cfg.device)
     horizon = int(getattr(env_cfg, "horizon_steps", 240))
-    nuisance_dist = float(getattr(env_cfg, "nuisance_dist", 12.0))
 
     def _adv_ctrl(obs: Any) -> int:
-        act, _ = ppo.predict(np.asarray(obs, dtype=np.float32), deterministic=True)
+        act, _ = ppo.predict(np.asarray(obs, dtype=np.float32).flatten(), deterministic=True)
         return int(np.asarray(act).reshape(-1)[0])
 
     n = min(int(cfg.eval_rollouts), len(specs))
@@ -179,17 +192,17 @@ def _eval_policy(
             env_cfg=env_cfg,
             stop_on_critical=False,
         )
-        s = _score(result, horizon=horizon, nuisance_dist=nuisance_dist)
-        d, t = _measures(result, horizon=horizon)
+        s = _score(result)
+        d_norm, ttci_norm = _measures(result, horizon=horizon, dist_max=dist_max)
         scores.append(s)
-        measures.append((d, t))
+        measures.append((d_norm, ttci_norm))
         p_critical += 1.0 if result.metrics.critical_incident else 0.0
         p_collision += 1.0 if result.metrics.ego_collision else 0.0
 
     n_actual = max(1, len(scores))
     mean_score = float(np.mean(scores)) if scores else float("-inf")
-    mean_d = float(np.mean([m[0] for m in measures])) if measures else float("inf")
-    mean_t = float(np.mean([m[1] for m in measures])) if measures else float(horizon)
+    mean_d = float(np.mean([m[0] for m in measures])) if measures else 1.0
+    mean_t = float(np.mean([m[1] for m in measures])) if measures else 1.0
 
     return {
         "objective": mean_score,
@@ -199,8 +212,8 @@ def _eval_policy(
             "mean_score": mean_score,
             "p_critical": p_critical / n_actual,
             "p_collision": p_collision / n_actual,
-            "mean_min_dist": mean_d,
-            "mean_ttci_steps": mean_t,
+            "mean_d_norm": mean_d,
+            "mean_ttci_adv_norm": mean_t,
         },
     }
 
@@ -211,10 +224,9 @@ def _export_archive(
     out_path: Path,
     meta: Dict[bytes, Dict[str, Any]],
     dims: List[int],
-    dist_range: List[float],
-    tcrit_range: List[float],
     specs: List[RolloutSpec],
 ) -> None:
+    """Write archive to JSON. Ranges are normalised [0,1]^2 on both axes."""
     from dataclasses import asdict
 
     sols = archive.data("solution")
@@ -239,9 +251,11 @@ def _export_archive(
         "method": "qdrl",
         "archive": {
             "dims": dims,
+            # Both axes are normalised to [0,1]: d_norm = min_dist/60, ttci_adv_norm = TTCI_adv/240
+            # Identical grid to MAP-Elites — Table 3 archive comparison is valid.
             "ranges": {
-                "dist": [float(dist_range[0]), float(dist_range[1])],
-                "tcrit": [float(tcrit_range[0]), float(tcrit_range[1])],
+                "d_norm": [0.0, 1.0],
+                "ttci_adv_norm": [0.0, 1.0],
             },
             "occupied": int(len(archive)),
             "cells": cells,
@@ -264,6 +278,7 @@ def run_qdrl(
     output_dir: Path,
     seed: int = 0,
     env_cfg: Any = None,
+    dist_max: float = _DIST_MAX_DEFAULT,
 ) -> None:
     """Run QD-RL and write the final archive to output_dir.
 
@@ -271,8 +286,10 @@ def run_qdrl(
       1. Ask pyribs for a batch of reward shaping candidates.
       2. For each candidate, train a burst PPO adversary with those params.
       3. Evaluate the trained policy on a rollout-spec subset.
-      4. Tell pyribs the fitness and phi measures.
+      4. Tell pyribs the fitness and phi measures (normalised [0,1]^2).
 
+    The archive uses ranges [(0.0, 1.0), (0.0, 1.0)] — same as MAP-Elites —
+    so archive-level diversity (Table 3) is directly comparable.
     Writes qdrl_archive.json and periodic snapshots.
     """
     try:
@@ -295,14 +312,8 @@ def run_qdrl(
     )
 
     horizon = int(getattr(env_cfg, "horizon_steps", 240)) if env_cfg else 240
-    nuisance_dist = float(getattr(env_cfg, "nuisance_dist", 12.0)) if env_cfg else 12.0
 
     dims = list(cfg.archive_grid_dims)
-    d_lo, d_hi = float(cfg.dist_range[0]), float(cfg.dist_range[1])
-    if cfg.tcrit_range:
-        t_lo, t_hi = float(cfg.tcrit_range[0]), float(cfg.tcrit_range[1])
-    else:
-        t_lo, t_hi = 0.0, float(horizon)
 
     rc_lo, rc_hi = float(cfg.r_critical_range[0]), float(cfg.r_critical_range[1])
     rcl_lo, rcl_hi = float(cfg.r_adv_close_range[0]), float(cfg.r_adv_close_range[1])
@@ -310,10 +321,12 @@ def run_qdrl(
     sol_lo = np.array([rc_lo, rcl_lo, rn_lo], dtype=np.float32)
     sol_hi = np.array([rc_hi, rcl_hi, rn_hi], dtype=np.float32)
 
+    # Archive ranges are normalised [0,1]^2, identical to MAP-Elites.
+    # dist_range in config is unused for archive indexing; dist_max controls normalisation.
     archive = GridArchive(
         solution_dim=3,
         dims=dims,
-        ranges=[(d_lo, d_hi), (t_lo, t_hi)],
+        ranges=[(0.0, 1.0), (0.0, 1.0)],
         qd_score_offset=0.0,
     )
     emitters = [
@@ -367,6 +380,7 @@ def run_qdrl(
                 env_cfg=env_cfg,
                 cfg=cfg,
                 rng=rng,
+                dist_max=dist_max,
             )
 
             objs.append(float(ev["objective"]))
@@ -414,8 +428,7 @@ def run_qdrl(
             snap = output_dir / f"qdrl_archive_it{it:04d}.json"
             _export_archive(
                 archive=archive, out_path=snap, meta=meta,
-                dims=dims, dist_range=[d_lo, d_hi], tcrit_range=[t_lo, t_hi],
-                specs=specs,
+                dims=dims, specs=specs,
             )
 
     _export_archive(
@@ -423,8 +436,6 @@ def run_qdrl(
         out_path=output_dir / "qdrl_archive.json",
         meta=meta,
         dims=dims,
-        dist_range=[d_lo, d_hi],
-        tcrit_range=[t_lo, t_hi],
         specs=specs,
     )
     update_run_status(

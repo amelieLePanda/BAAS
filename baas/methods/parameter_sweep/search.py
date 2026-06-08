@@ -22,7 +22,7 @@ from baas.core.env_adapter import EnvAdapter
 from baas.core.metrics import EpisodeMetrics, IncidentThresholds
 from baas.core.rollout import run_episode
 from baas.core.types import EpisodeResult, RolloutSpec
-from baas.evaluation.runner import save_results
+from baas.evaluation.runner import estimate_feasibility, save_results
 from baas.methods.parameter_sweep.config import ParameterSweepConfig
 
 import baas
@@ -53,6 +53,7 @@ def run_parameter_sweep(
     output_dir: Path,
     config: dict,
     config_sha1: str,
+    n_feasibility_reruns: int = 0,
 ) -> List[EpisodeResult]:
     """Run the parameter sweep and write results to output_dir.
 
@@ -105,6 +106,24 @@ def run_parameter_sweep(
         if best_result is None:
             logger.warning("All grid points failed for rollout %d, skipping.", spec.rollout_index)
             continue
+
+        if n_feasibility_reruns > 0:
+            def _best_post_reset(unwrapped: Any, _dx=best_dx, _dy=best_dy, _dv=best_dv) -> None:
+                adapter.apply_background_perturbation(unwrapped, 1, _dx, _dy, _dv)
+
+            feasibility, label = estimate_feasibility(
+                spec, adapter, ego_policy, thresholds,
+                make_controllers=lambda s: [],
+                env_cfg=env_cfg,
+                n_reruns=n_feasibility_reruns,
+                post_reset_fn=_best_post_reset,
+            )
+            best_result.metrics.feasibility = feasibility
+            best_result.metrics.difficulty_label = label
+            logger.debug(
+                "Rollout %d feasibility=%.2f  label=%s",
+                spec.rollout_index, feasibility, label,
+            )
 
         best_results.append(best_result)
         best_params.append({

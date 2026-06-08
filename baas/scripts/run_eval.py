@@ -74,7 +74,7 @@ def _make_controllers_ppo(artefact_path: Path, device: str = "cpu") -> Callable:
     ppo = PPO.load(str(artefact_path), device=device)
 
     def _ctrl(obs: Any) -> int:
-        act, _ = ppo.predict(np.asarray(obs, dtype=np.float32), deterministic=True)
+        act, _ = ppo.predict(np.asarray(obs, dtype=np.float32).flatten(), deterministic=True)
         return int(np.asarray(act).reshape(-1)[0])
 
     def make_controllers(spec: Any) -> List[Any]:
