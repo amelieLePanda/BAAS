@@ -1,10 +1,10 @@
-# BAAS — Benchmarking Adversarial Agent Strategies
+# BAAS - Benchmarking Adversarial Agent Strategies
 
-> **DRAFT** — Results for QD-RL are pending a full rerun. This README will be updated once the final experiment is complete.
+> **DRAFT**  Results for QD-RL are pending a full rerun. This README will be updated once the final experiment is complete.
 
 A reproducible benchmarking framework for adversarial scenario generation in autonomous driving validation. Five adversarial paradigms are compared under identical conditions against a frozen ego policy in a highway driving environment.
 
-**Paper:** C. M.-L. Frischknecht-Gruber, M. Reif, A. Fischer — *BAAS: Benchmarking Adversarial Agent Strategies — A Comparative Study of Gradient-based, Reinforcement, and Evolutionary Paradigms for Safety-Critical Scenario Generation* — Proc. 36th European Safety and Reliability Conference (ESREL 2026)
+**Paper:** C. M.-L. Frischknecht-Gruber, M. Reif, A. Fischer - *BAAS: Benchmarking Adversarial Agent Strategies - A Comparative Study of Gradient-based, Reinforcement, and Evolutionary Paradigms for Safety-Critical Scenario Generation* - Proc. 36th European Safety and Reliability Conference (ESREL 2026)
 
 ---
 
@@ -22,13 +22,13 @@ A reproducible benchmarking framework for adversarial scenario generation in aut
 
 ## Results
 
-Results below are from extended experiment runs (May–June 2026) superseding the published paper values. See the **Corrections** section for details on numerical differences.
+Results below are from extended experiment runs (May–June 2026), superseding the published paper values. See the **Corrections** section for details on numerical differences.
 
 ### Effectiveness
 
 | Method | p_coll | Mean TTCI_adv (steps) |
 |---|---|---|
-| Parameter Sweep | 0.633 | — |
+| Parameter Sweep | 0.633 | - |
 | KING-light | 0.433 | 114.9 |
 | PPO Adversary | 0.633 | 78.2 |
 | MAP-Elites | 0.500 | 140.4 |
@@ -38,19 +38,19 @@ Results below are from extended experiment runs (May–June 2026) superseding th
 
 | Method | Feasibility | Max Adv Jerk (m/s³) |
 |---|---|---|
-| Parameter Sweep | — | — |
+| Parameter Sweep | - | - |
 | KING-light | 0.570 | 43.3 |
 | PPO Adversary | 0.263 | 53.9 |
 | MAP-Elites | 0.593 | 38.3 |
 | QD-RL | *pending* | *pending* |
 
-Feasibility = fraction of fixed-perturbation reruns where the ego avoids terminal failure. Higher feasibility means the scenario is challenging but solvable — the target property for V&V-relevant scenarios.
+Feasibility = fraction of fixed-perturbation reruns where the ego avoids terminal failure. Higher feasibility means the scenario is challenging but solvable - the target property for V&V-relevant scenarios.
 
 ### Diversity in φ-space (evaluation rollouts)
 
 | Method | Coverage (φ) | Entropy (φ) | Diversity Score |
 |---|---|---|---|
-| Parameter Sweep | — | — | — |
+| Parameter Sweep | - | - | - |
 | KING-light | 0.140 | 0.528 | 0.334 |
 | PPO Adversary | 0.110 | 0.470 | 0.290 |
 | MAP-Elites | 0.090 | 0.423 | 0.257 |
@@ -62,7 +62,7 @@ Feasibility = fraction of fixed-perturbation reruns where the ego avoids termina
 > The extended runs (May–June 2026) supersede the values in the ESREL 2026 paper. Two systematic differences exist: (1) jerk is now computed from kinematic replay traces at `dt = 0.5 s`, giving physically coherent values (16–54 m/s³); the paper's values (up to 1676 m/s³) were from an earlier implementation and are physically implausible. (2) QD-RL results are pending a full rerun under the revised configuration (10×10 archive, burst\_steps=25 000, ent\_coef=0.02); the paper's QD-RL feasibility of 0.767 was from a run that terminated early. All other method results are from complete runs.
 
 > **Note on Feasibility Across Method Types**
-> Feasibility is estimated by replaying the same adversary 10 times with varied ego environment seeds and counting the fraction of reruns in which the ego survives. For active adversary methods (KING-light, PPO, MAP-Elites, QD-RL) the adversary controller is held fixed across reruns. For the parameter sweep the "adversary" is a background IDM/MOBIL vehicle repositioned to the worst-case initial conditions found during the sweep; feasibility therefore reflects how reliably that initial configuration leads to a critical outcome — not the robustness of a trained policy. The two feasibility values are comparable in direction (higher = harder but solvable) but differ structurally: parameter sweep feasibility characterises a static perturbation, whereas active-method feasibility characterises a trained adversarial behaviour.
+> Feasibility is estimated by replaying the same adversary 10 times with varied ego environment seeds and counting the fraction of reruns in which the ego survives. For active adversary methods (KING-light, PPO, MAP-Elites, QD-RL) the adversary controller is held fixed across reruns. For the parameter sweep, the "adversary" is a background IDM/MOBIL vehicle repositioned to the worst-case initial conditions found during the sweep; feasibility, therefore, reflects how reliably that initial configuration leads to a critical outcome - not the robustness of a trained policy. The two feasibility values are comparable in direction (higher = harder but solvable) but differ structurally: parameter sweep feasibility characterises a static perturbation, whereas active-method feasibility characterises a trained adversarial behaviour.
 
 ---
 
