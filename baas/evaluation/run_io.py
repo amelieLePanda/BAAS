@@ -7,7 +7,7 @@ run.json that is easy to scan or load for comparison.
 MLflow integration is optional. Set MLFLOW_TRACKING_URI (e.g. "http://localhost:5000"
 or a local path like "file:./mlruns") and install mlflow to enable it. If mlflow
 is not installed or the env var is not set, all logging is silently skipped.
-Each call to write_run_meta() starts an MLflow run; update_run_status() logs
+Each call to write_run_meta() starts an MLflow run. update_run_status() logs
 final metrics and ends it. The run.json files remain the ground truth regardless.
 """
 from __future__ import annotations
@@ -24,7 +24,7 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-_MADS_VERSION = "0.1.0"
+_BAAS_VERSION = "0.1.0"
 
 # Module-level MLflow run ID so update_run_status can end the right run.
 # Keyed by str(output_dir) to support multiple concurrent runs in tests.
@@ -96,7 +96,7 @@ def write_run_meta(
     cfg_dict = _serialise(config) if not isinstance(config, dict) else config
 
     meta: Dict[str, Any] = {
-        "baas_version": _MADS_VERSION,
+        "baas_version": _BAAS_VERSION,
         "method": method,
         "timestamp_start": datetime.now(timezone.utc).isoformat(),
         "timestamp_end": None,
@@ -118,7 +118,7 @@ def write_run_meta(
         try:
             import mlflow
             run_name = f"{method}_s{seed}_n{n_adversaries}"
-            mlflow.set_experiment(f"MADS/{method}")
+            mlflow.set_experiment(f"BAAS/{method}")
             mlf_run = mlflow.start_run(run_name=run_name)
             _mlflow_run_ids[str(output_dir)] = mlf_run.info.run_id
             mlflow.set_tags({
@@ -129,7 +129,7 @@ def write_run_meta(
                 "output_dir": str(output_dir),
             })
             params = _flatten_params(cfg_dict)
-            # MLflow param values are capped at 500 chars; truncate safely
+            # MLflow param values are capped at 500 chars. Truncate safely.
             mlflow.log_params({k: v[:500] for k, v in params.items()})
         except Exception as exc:
             logger.debug("MLflow logging skipped: %s", exc)

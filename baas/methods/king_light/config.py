@@ -1,6 +1,6 @@
 """KING-light configuration.
 
-Single adversary only; gradient-based proxy optimisation is not compatible
+Single adversary only. Gradient-based proxy optimisation is not compatible
 with multi-agent coordination constraints.
 """
 from __future__ import annotations

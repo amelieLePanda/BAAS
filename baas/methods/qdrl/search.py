@@ -34,7 +34,7 @@ from baas.methods.qdrl.config import QDRLConfig
 
 logger = logging.getLogger(__name__)
 
-_DIST_MAX_DEFAULT = 60.0  # metres — matches MAP-Elites and benchmark_v1.yaml diversity.dist_max
+_DIST_MAX_DEFAULT = 60.0  # metres. Matches MAP-Elites and benchmark_v1.yaml diversity.dist_max.
 
 
 def _score(result: EpisodeResult) -> float:
@@ -62,7 +62,7 @@ def _measures(
     horizon: int,
     dist_max: float = _DIST_MAX_DEFAULT,
 ) -> Tuple[float, float]:
-    """Behaviour descriptor phi in [0,1]^2 — identical to MAP-Elites _behaviour_descriptor.
+    """Behaviour descriptor phi in [0,1]^2, identical to MAP-Elites _behaviour_descriptor.
 
     Uses time_to_critical_incident_adv_steps (TTCI_adv), not TTCI_any, so the
     archive axes match MAP-Elites and Table 3 is a valid comparison.
@@ -251,8 +251,8 @@ def _export_archive(
         "method": "qdrl",
         "archive": {
             "dims": dims,
-            # Both axes are normalised to [0,1]: d_norm = min_dist/60, ttci_adv_norm = TTCI_adv/240
-            # Identical grid to MAP-Elites — Table 3 archive comparison is valid.
+            # Both axes are normalised to [0,1]: d_norm = min_dist/60, ttci_adv_norm = TTCI_adv/240.
+            # Identical grid to MAP-Elites, so Table 3 archive comparison is valid.
             "ranges": {
                 "d_norm": [0.0, 1.0],
                 "ttci_adv_norm": [0.0, 1.0],
@@ -288,7 +288,7 @@ def run_qdrl(
       3. Evaluate the trained policy on a rollout-spec subset.
       4. Tell pyribs the fitness and phi measures (normalised [0,1]^2).
 
-    The archive uses ranges [(0.0, 1.0), (0.0, 1.0)] — same as MAP-Elites —
+    The archive uses ranges [(0.0, 1.0), (0.0, 1.0)], the same as MAP-Elites,
     so archive-level diversity (Table 3) is directly comparable.
     Writes qdrl_archive.json and periodic snapshots.
     """
@@ -322,7 +322,7 @@ def run_qdrl(
     sol_hi = np.array([rc_hi, rcl_hi, rn_hi], dtype=np.float32)
 
     # Archive ranges are normalised [0,1]^2, identical to MAP-Elites.
-    # dist_range in config is unused for archive indexing; dist_max controls normalisation.
+    # dist_range in config is unused for archive indexing. dist_max controls normalisation.
     archive = GridArchive(
         solution_dim=3,
         dims=dims,

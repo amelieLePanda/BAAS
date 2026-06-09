@@ -147,6 +147,11 @@ class AdversaryVsEgoEnv(gymnasium.Env):
 
         critical = bool(ego_crashed) or (dist <= self.critical_dist)
         if critical and not self._critical_triggered:
+            # Intentional deviation from the paper: the paper defines r_term on ego
+            # collision only; here it fires on any critical incident (collision or
+            # proximity threshold). This produces a slightly more aggressive adversary
+            # during training. Evaluation metrics are unaffected — they run through
+            # the shared neutral evaluation path in core/rollout.py.
             r += self.r_critical
             self._critical_triggered = True
 

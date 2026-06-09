@@ -1,10 +1,10 @@
-# BAAS — Benchmarking Adversarial Agent Strategies
+# BAAS: Benchmarking Adversarial Agent Strategies
 
-> **DRAFT** — Results for QD-RL are pending a full rerun. This README will be updated once the final experiment is complete.
+> **DRAFT.** Results for QD-RL are pending a full rerun. This README will be updated once the final experiment is complete.
 
 A reproducible benchmarking framework for adversarial scenario generation in autonomous driving validation. Five adversarial paradigms are compared under identical conditions against a frozen ego policy in a highway driving environment.
 
-**Paper:** C. M.-L. Frischknecht-Gruber, M. Reif, A. Fischer — *BAAS: Benchmarking Adversarial Agent Strategies — A Comparative Study of Gradient-based, Reinforcement, and Evolutionary Paradigms for Safety-Critical Scenario Generation* — Proc. 36th European Safety and Reliability Conference (ESREL 2026)
+**Paper:** C. M.-L. Frischknecht-Gruber, M. Reif, A. Fischer. *BAAS: Benchmarking Adversarial Agent Strategies. A Comparative Study of Gradient-based, Reinforcement, and Evolutionary Paradigms for Safety-Critical Scenario Generation.* Proc. 36th European Safety and Reliability Conference (ESREL 2026)
 
 ---
 
@@ -13,7 +13,7 @@ A reproducible benchmarking framework for adversarial scenario generation in aut
 | Method | Paradigm | Description |
 |---|---|---|
 | Parameter Sweep | Non-learning baseline | Deterministic grid search over initial adversary positions and velocities |
-| KING-light | Gradient-based | Differentiable bicycle proxy; optimises a continuous action sequence via gradient descent |
+| KING-light | Gradient-based | Differentiable bicycle proxy that optimises a continuous action sequence via gradient descent |
 | PPO Adversary | Reinforcement learning | Single adversary trained with PPO against the frozen ego |
 | MAP-Elites | Quality-Diversity | Open-loop action sequences evolved to fill a behavioural descriptor archive |
 | QD-RL | QD + Reinforcement learning | MAP-Elites archive of PPO policies, each trained with different reward shaping |
@@ -44,7 +44,7 @@ Results below are from extended experiment runs (May–June 2026) superseding th
 | MAP-Elites | 0.593 | 38.3 |
 | QD-RL | *pending* | *pending* |
 
-Feasibility = fraction of fixed-perturbation reruns where the ego avoids terminal failure. Higher feasibility means the scenario is challenging but solvable — the target property for V&V-relevant scenarios.
+Feasibility = fraction of fixed-perturbation reruns where the ego avoids terminal failure. Higher feasibility means the scenario is challenging but solvable, which is the target property for V&V-relevant scenarios.
 
 ### Diversity in φ-space (evaluation rollouts)
 
@@ -59,10 +59,10 @@ Feasibility = fraction of fixed-perturbation reruns where the ego avoids termina
 ---
 
 > **Note on Results (Update to Published Paper)**
-> The extended runs (May–June 2026) supersede the values in the ESREL 2026 paper. Two systematic differences exist: (1) jerk is now computed from kinematic replay traces at `dt = 0.5 s`, giving physically coherent values (16–54 m/s³); the paper's values (up to 1676 m/s³) were from an earlier implementation and are physically implausible. (2) QD-RL results are pending a full rerun under the revised configuration (10×10 archive, burst\_steps=25 000, ent\_coef=0.02); the paper's QD-RL feasibility of 0.767 was from a run that terminated early. All other method results are from complete runs.
+> The extended runs (May–June 2026) supersede the values in the ESREL 2026 paper. Two systematic differences exist. First, jerk is now computed from kinematic replay traces at `dt = 0.5 s`, giving physically coherent values (16–54 m/s³). The paper's values (up to 1676 m/s³) were from an earlier implementation and are physically implausible. Second, QD-RL results are pending a full rerun under the revised configuration (10×10 archive, burst\_steps=25 000, ent\_coef=0.02). The paper's QD-RL feasibility of 0.767 was from a run that terminated early. All other method results are from complete runs.
 
 > **Note on Feasibility Across Method Types**
-> Feasibility is estimated by replaying the same adversary 10 times with varied ego environment seeds and counting the fraction of reruns in which the ego survives. For active adversary methods (KING-light, PPO, MAP-Elites, QD-RL) the adversary controller is held fixed across reruns. For the parameter sweep the "adversary" is a background IDM/MOBIL vehicle repositioned to the worst-case initial conditions found during the sweep; feasibility therefore reflects how reliably that initial configuration leads to a critical outcome — not the robustness of a trained policy. The two feasibility values are comparable in direction (higher = harder but solvable) but differ structurally: parameter sweep feasibility characterises a static perturbation, whereas active-method feasibility characterises a trained adversarial behaviour.
+> Feasibility is estimated by replaying the same adversary 10 times with varied ego environment seeds and counting the fraction of reruns in which the ego survives. For active adversary methods (KING-light, PPO, MAP-Elites, QD-RL) the adversary controller is held fixed across reruns. For the parameter sweep, the background IDM/MOBIL vehicle is repositioned to the worst-case initial conditions found during the sweep. Feasibility there reflects how reliably that initial configuration leads to a critical outcome, not the robustness of a trained policy. The two feasibility values are comparable in direction (higher means harder but solvable) but differ structurally: parameter sweep feasibility characterises a static perturbation, whereas active-method feasibility characterises a trained adversarial behaviour.
 
 ---
 
@@ -79,6 +79,8 @@ The extended runs revealed two systematic differences from the paper's reported 
 **Jerk values**: The paper reported Max Adv Jerk values of 1676 m/s³ (KING-light) and 961 m/s³ (MAP-Elites). The current implementation computes jerk from kinematic replay traces using `dt = 1/policy_frequency = 0.5 s`, yielding physically coherent values in the 16–54 m/s³ range. The paper's values were produced by an earlier implementation and are physically implausible for highway vehicles (comfort limit ~6 m/s³, emergency limit ~60–100 m/s³). The conceptual ordering is preserved: QD-RL still produces the lowest adversary jerk of all active methods.
 
 **QD-RL feasibility**: The paper reported QD-RL feasibility of 0.767, based on a run that terminated early. The new run uses an improved configuration (10×10 archive, burst_steps=25 000, n_envs=4, ent_coef=0.02) and will report updated values once complete.
+
+**PPO terminal reward**: The paper defines the terminal reward on ego collision. In the implementation it fires on any critical incident, including proximity-only triggers. This is deliberate and produces a slightly more aggressive adversary during training. It does not affect evaluation metrics, which use the shared neutral evaluation path.
 
 ---
 

@@ -1,7 +1,7 @@
 """BicycleProxy: differentiable bicycle-model surrogate for KING-light.
 
 Migrated from king_light/bicycle.py with logic unchanged.
-Single adversary only; not used in multi-agent QD methods.
+Single adversary only. Not used in multi-agent QD methods.
 """
 from __future__ import annotations
 

@@ -255,7 +255,7 @@ def main() -> None:
 
     specs = load_rollout_specs(args.specs)
     adapter = HighwayEnvAdapter()
-    # Lidar ablation uses PPOEgoPolicy; all other methods use DQNEgoPolicy
+    # Lidar ablation uses PPOEgoPolicy. All other methods use DQNEgoPolicy.
     if args.method == "mappo_adversary_lidar":
         ego = PPOEgoPolicy(str(args.ego_policy))
     else:

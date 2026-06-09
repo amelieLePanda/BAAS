@@ -210,7 +210,7 @@ def _render_highlighted(
                 logger.warning("Could not match target vehicle at step=%d (best_dist=%.2f)",
                                steps, best_dist)
 
-        # Force all traffic blue; highlight target yellow
+        # Force all traffic blue, highlight target yellow
         for v in vehicles:
             v.color = (100, 200, 255)  # type: ignore[assignment]
         if target_vehicle is not None and any(v is target_vehicle for v in vehicles):

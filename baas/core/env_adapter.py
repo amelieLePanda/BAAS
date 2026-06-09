@@ -79,7 +79,7 @@ class EnvAdapter(ABC):
 
         Features per row: [presence, dx, dy, dvx, dvy] normalised.
         Row 0 is the observer itself (dx=dy=dvx=dvy=0).
-        Rows 1..n_obs-1 are nearby vehicles sorted by distance; zero-padded.
+        Rows 1..n_obs-1 are nearby vehicles sorted by distance. Zero-padded.
 
         Returns zeros by default. Implemented in HighwayEnvAdapter.
         """

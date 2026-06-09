@@ -34,4 +34,4 @@ if len(per_seed) == 5:
           f"{m.get('mean_ttci_adv_steps_std') or float('nan'):>9.1f}  "
           f"{m.get('mean_feasibility_std') or float('nan'):>12.3f}")
 else:
-    print(f"\nOnly {len(per_seed)}/5 seeds found — run missing seeds first.")
+    print(f"\nOnly {len(per_seed)}/5 seeds found. Run missing seeds first.")

@@ -80,7 +80,7 @@ def sample_initial_states(
             break
 
         except Exception:
-            # Fallback using raw observation array; constraint enforcement is best-effort
+            # Fallback using raw observation array. Constraint enforcement is best-effort.
             arr = np.array(obs, dtype=float)
             if arr.ndim == 2 and arr.shape[0] >= (n_adversaries + 1) and arr.shape[1] >= 4:
                 ego_state = arr[0, :4].astype(np.float32)

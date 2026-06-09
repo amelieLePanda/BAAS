@@ -52,7 +52,7 @@ def _cmd_summarise(args: argparse.Namespace) -> None:
                 per_seed.append(summarise_runs([data]))
         if per_seed:
             ms = summarise_multiseed(per_seed)
-            summary.update(ms)  # keys are e.g. "king_light (n=1)" — same as summarise_runs would use
+            summary.update(ms)  # keys match summarise_runs format, e.g. "king_light (n=1)"
             logger.info("Multi-seed summary for %s: %d seeds", multiseed_method, len(per_seed))
         else:
             logger.warning("No seed dirs found for multiseed method %s", multiseed_method)

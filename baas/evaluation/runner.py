@@ -104,7 +104,7 @@ def estimate_feasibility(
     Returns (feasibility, difficulty_label) where feasibility is the fraction of
     reruns in which the ego survives.
 
-    post_reset_fn: optional callable passed to run_episode — used by parameter
+    post_reset_fn: optional callable passed to run_episode. Used by parameter
     sweep to reposition the background vehicle after each env reset.
     """
     survived = 0
