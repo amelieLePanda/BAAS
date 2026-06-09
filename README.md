@@ -22,13 +22,13 @@ A reproducible benchmarking framework for adversarial scenario generation in aut
 
 ## Results
 
-Results below are from extended experiment runs (May–June 2026) superseding the published paper values. See the **Corrections** section for details on numerical differences.
+Results below are from extended experiment runs (May–June 2026), superseding the published paper values. See the **Corrections** section for details on numerical differences.
 
 ### Effectiveness
 
 | Method | p_coll | Mean TTCI_adv (steps) |
 |---|---|---|
-| Parameter Sweep | 0.633 | — |
+| Parameter Sweep | 0.633 | - |
 | KING-light | 0.433 | 114.9 |
 | PPO Adversary | 0.633 | 78.2 |
 | MAP-Elites | 0.500 | 140.4 |
@@ -38,7 +38,7 @@ Results below are from extended experiment runs (May–June 2026) superseding th
 
 | Method | Feasibility | Max Adv Jerk (m/s³) |
 |---|---|---|
-| Parameter Sweep | — | — |
+| Parameter Sweep | - | - |
 | KING-light | 0.570 | 43.3 |
 | PPO Adversary | 0.263 | 53.9 |
 | MAP-Elites | 0.593 | 38.3 |
@@ -50,7 +50,7 @@ Feasibility = fraction of fixed-perturbation reruns where the ego avoids termina
 
 | Method | Coverage (φ) | Entropy (φ) | Diversity Score |
 |---|---|---|---|
-| Parameter Sweep | — | — | — |
+| Parameter Sweep | - | - | - |
 | KING-light | 0.140 | 0.528 | 0.334 |
 | PPO Adversary | 0.110 | 0.470 | 0.290 |
 | MAP-Elites | 0.090 | 0.423 | 0.257 |
