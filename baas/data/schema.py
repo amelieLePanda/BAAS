@@ -18,6 +18,7 @@ class ScenarioRecord:
     The label field is filled by data/labeller.py if human feedback is collected.
     """
 
+    scenario_id: str
     method: str
     baas_version: str
     config_sha1: str

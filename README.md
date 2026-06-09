@@ -72,6 +72,81 @@ Feasibility = fraction of fixed-perturbation reruns where the ego avoids termina
 
 ---
 
+## Dataset Release
+
+The scenario catalogue (`runs/catalogue.json`) records every evaluated rollout across all methods. It is a flat JSON array, one object per rollout.
+
+### Catalogue schema
+
+| Field | Type | Description |
+|---|---|---|
+| `scenario_id` | str | Unique identifier: `{method}_s{opt_seed}_{rollout_index:03d}` |
+| `method` | str | `parameter_sweep`, `king_light`, `ppo_adversary`, `map_elites`, `qdrl` |
+| `opt_seed` | int | Seed index used during optimisation (0 for single-run methods) |
+| `rollout_index` | int | Index into the shared rollout spec pool |
+| `env_seed` | int | Gymnasium environment seed |
+| `critical_incident` | bool | Whether a critical incident was triggered |
+| `ego_collision` | bool | Whether the ego vehicle collided |
+| `feasibility` | float\|null | Fraction of 10 reruns in which ego survives |
+| `difficulty_label` | str\|null | Tier based on feasibility (see below) |
+| `phi_dist` | float\|null | Behavioural descriptor: `min_dist_ego_adv` in metres |
+| `phi_ttci` | float\|null | Behavioural descriptor: TTCI_adv in steps |
+| `min_dist_ego_adv` | float\|null | Minimum ego-to-adversary distance in metres |
+| `ttci_adv_steps` | int\|null | Time to critical incident involving adversary (steps) |
+| `max_adv_jerk` | float\|null | Maximum adversary jerk in m/s³ |
+| `results_path` | str | Path to `results.json` relative to catalogue dir |
+| `artefact_reference` | str | Path to adversary artefact relative to catalogue dir, or `""` |
+
+### Difficulty labels
+
+| Label | Feasibility range | Interpretation |
+|---|---|---|
+| `degenerate` | < 0.10 | Ego almost always fails regardless of adversary |
+| `hardcore` | 0.10 to 0.30 | Ego rarely escapes |
+| `hard` | 0.30 to 0.50 | Ego escapes less than half the time |
+| `medium` | 0.50 to 0.70 | Adversary holds an edge |
+| `easy` | 0.70 to 1.00 | Ego mostly survives |
+| `trivial` | 1.00 | Ego always survives |
+
+### Generating or extending the catalogue
+
+```bash
+# Add a method's run(s) to the catalogue (append-safe, skips duplicate scenario_ids):
+python -m baas.data.catalogue \
+    --catalogue runs/catalogue.json \
+    --run-dirs runs/map_elites/run_000 \
+    --artefact-name archive.json \
+    --opt-seeds 0
+
+# Multi-seed methods (e.g. KING-light seeds 0-4):
+python -m baas.data.catalogue \
+    --catalogue runs/catalogue.json \
+    --run-dirs runs/king_light/run_king_light_seed{0,1,2,3,4} \
+    --artefact-name king_light_artefact.json \
+    --opt-seeds 0 1 2 3 4
+```
+
+### Replaying a scenario by ID
+
+```python
+from pathlib import Path
+from baas.adapters.highway_env.adapter import HighwayEnvAdapter
+from baas.core.ego_policy import DQNEgoPolicy
+from baas.core.metrics import IncidentThresholds
+from baas.evaluation.replay import replay_by_scenario_id
+
+result = replay_by_scenario_id(
+    scenario_id="map_elites_s0_007",
+    catalogue_path=Path("runs/catalogue.json"),
+    adapter=HighwayEnvAdapter(),
+    ego_policy=DQNEgoPolicy("pretrained/frozen_model_dqn_cnn.zip"),
+    thresholds=IncidentThresholds(...),
+    output_path=Path("replay_map_elites_s0_007.gif"),
+)
+```
+
+---
+
 ## Corrections to Published Paper
 
 The extended runs revealed two systematic differences from the paper's reported values:

@@ -31,56 +31,15 @@ SUPPORTED_METHODS = ["map_elites", "ppo_adversary", "mappo_adversary", "mappo_ad
 
 
 def _make_controllers_map_elites(
-    artefact_path: Path,
-    cfg: dict,
-    n_adversaries: int,
+    artefact_path: Path, cfg: dict, n_adversaries: int,
 ) -> Callable:
-    from baas.evaluation.runner import action_seq_controllers
-    from baas.methods.map_elites.genome import ActionSeqGenomeSpec
-
-    data = json.loads(artefact_path.read_text(encoding="utf-8"))
-    records = data.get("archive", [])
-    if not records:
-        raise RuntimeError(f"No elites found in archive: {artefact_path}")
-
-    best = max(records, key=lambda r: float(r.get("objective", float("-inf"))))
-    sol_keys = sorted(k for k in best if k.startswith("solution_"))
-    if not sol_keys:
-        raise RuntimeError("Archive record has no solution_N columns.")
-    solution = np.array([float(best[k]) for k in sol_keys], dtype=np.float32)
-
-    me_raw = cfg.get("map_elites", {})
-    genome_spec = ActionSeqGenomeSpec(
-        horizon_steps=cfg["env"]["horizon_steps"],
-        n_adversaries=n_adversaries,
-        n_blocks=me_raw.get("n_blocks", 20),
-        block_size=me_raw.get("block_size", 3),
-    )
-    genome = genome_spec.from_continuous(solution)
-    seqs = genome_spec.decode(genome)
-    horizon = cfg["env"]["horizon_steps"]
-
-    logger.info("Best elite objective=%.3f", float(best.get("objective", float("nan"))))
-
-    def make_controllers(spec: Any) -> List[Any]:
-        return action_seq_controllers(seqs, horizon)
-
-    return make_controllers
+    from baas.evaluation.controllers import make_controllers_map_elites
+    return make_controllers_map_elites(artefact_path, cfg, n_adversaries)
 
 
 def _make_controllers_ppo(artefact_path: Path, device: str = "cpu") -> Callable:
-    from stable_baselines3 import PPO
-
-    ppo = PPO.load(str(artefact_path), device=device)
-
-    def _ctrl(obs: Any) -> int:
-        act, _ = ppo.predict(np.asarray(obs, dtype=np.float32).flatten(), deterministic=True)
-        return int(np.asarray(act).reshape(-1)[0])
-
-    def make_controllers(spec: Any) -> List[Any]:
-        return [_ctrl]
-
-    return make_controllers
+    from baas.evaluation.controllers import make_controllers_ppo
+    return make_controllers_ppo(artefact_path, device)
 
 
 def _make_controllers_mappo(artefact_path: Path, n_adversaries: int, device: str = "cpu") -> Callable:
@@ -188,23 +147,8 @@ def _make_controllers_maddpg(artefact_path: Path, n_adversaries: int, device: st
 
 
 def _make_controllers_action_seq(artefact_path: Path, n_adversaries: int) -> Callable:
-    """Load an adv_actions_idx JSON (KING-light, CMA-ES, Novelty Search)."""
-    from baas.evaluation.runner import action_seq_controllers
-
-    data = json.loads(artefact_path.read_text(encoding="utf-8"))
-    adv_actions_idx: List[List[int]] = data.get("adv_actions_idx", [])
-    if not adv_actions_idx:
-        raise RuntimeError(f"No adv_actions_idx in: {artefact_path}")
-
-    if isinstance(adv_actions_idx[0], int):
-        adv_actions_idx = [adv_actions_idx]
-
-    horizon = len(adv_actions_idx[0])
-
-    def make_controllers(spec: Any) -> List[Any]:
-        return action_seq_controllers(adv_actions_idx, horizon)
-
-    return make_controllers
+    from baas.evaluation.controllers import make_controllers_action_seq
+    return make_controllers_action_seq(artefact_path)
 
 
 def main() -> None:

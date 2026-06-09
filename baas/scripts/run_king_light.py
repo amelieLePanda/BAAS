@@ -75,6 +75,11 @@ def main() -> None:
     raw_seqs = opt_result["adv_actions_idx"]  # list of T lists, each [action_for_adv_0]
     adv_seqs = [[step[0] for step in raw_seqs]]  # [[a0, a1, ..., aT]] for adversary 0
 
+    import json as _json
+    (args.output / "king_light_artefact.json").write_text(
+        _json.dumps({"adv_actions_idx": adv_seqs}), encoding="utf-8"
+    )
+
     horizon = specs[0].horizon_steps
 
     def _make_controllers(spec):  # noqa: ARG001
