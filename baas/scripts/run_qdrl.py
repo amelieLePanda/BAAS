@@ -29,6 +29,8 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--device", type=str, default=None,
                         help="Override cfg.device (e.g. 'cuda', 'cpu'). Default: use yaml value.")
+    parser.add_argument("--max-workers", type=int, default=None,
+                        help="Parallel workers for burst training. Default: min(n_candidates, cpu_count).")
     args = parser.parse_args()
 
     from baas.adapters.highway_env.adapter import HighwayEnvAdapter
@@ -56,6 +58,8 @@ def main() -> None:
         specs, adapter, ego, bundle.thresholds, qdrl_cfg,
         output_dir=args.output, seed=args.seed, env_cfg=bundle.env,
         dist_max=dist_max,
+        ego_policy_path=str(args.ego_policy),
+        max_workers=args.max_workers,
     )
 
 

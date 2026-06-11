@@ -23,9 +23,9 @@ class EgoPolicy(ABC):
 
 class DQNEgoPolicy(EgoPolicy):
 
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path: str, device: str = "auto") -> None:
         from stable_baselines3 import DQN
-        self._model = DQN.load(model_path)
+        self._model = DQN.load(model_path, device=device)
         logger.info("Loaded DQN ego from %s", model_path)
 
     def act(self, obs: Any, *, deterministic: bool = True) -> int:

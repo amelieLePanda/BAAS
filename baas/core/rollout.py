@@ -41,6 +41,13 @@ def _try_set_colour(vehicle: Any, rgb: tuple) -> None:
         pass
 
 
+def _clear_colour(vehicle: Any) -> None:
+    try:
+        vehicle.color = None
+    except Exception:
+        pass
+
+
 def _policy_stack_depth(ego_policy: EgoPolicy) -> int:
     """Return expected frame-stack depth from ego policy's observation space.
 
@@ -341,6 +348,9 @@ def run_episode(
         episode_return += float(reward)
 
         if record_frames:
+            for adv in advs:
+                if getattr(adv, "crashed", False):
+                    _clear_colour(adv)
             fr = env.render()
             if fr is not None:
                 frames.append(fr)  # type: ignore[union-attr]

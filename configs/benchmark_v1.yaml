@@ -102,7 +102,7 @@ novelty_search:
 
 qdrl:
   n_adversaries: 1
-  n_iters: 80
+  n_iters: 40
   n_emitters: 4
   emitter_batch_size: 4
   sigma0: 0.8
@@ -110,7 +110,7 @@ qdrl:
   archive_grid_dims: [10, 10]
   dist_range: [0.0, 50.0]
   burst_steps: 25000
-  n_envs: 4
+  n_envs: 1
   eval_rollouts: 6
   r_critical_range: [1.0, 2.0]
   r_adv_close_range: [-2.0, -0.2]

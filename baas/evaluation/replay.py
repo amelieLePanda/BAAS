@@ -117,13 +117,20 @@ def replay_by_scenario_id(
 
     method = row["method"]
     rollout_index = int(row["rollout_index"])
-    results_path = Path(row["results_path"])
-    run_dir = results_path.parent
     release_dir = Path(catalogue_path).parent
+    results_path = release_dir / row["results_path"]
+    run_dir = results_path.parent
 
-    # Load the RolloutSpec for this rollout
+    # Load the RolloutSpec for this rollout; fall back to regenerating from config
+    # if rollout_specs.json was not saved by the run (older ppo_adversary / parameter_sweep runs).
     specs_path = run_dir / "rollout_specs.json"
-    specs = load_rollout_specs(specs_path)
+    if specs_path.exists():
+        specs = load_rollout_specs(specs_path)
+    else:
+        from baas.evaluation.benchmark import make_rollout_specs_from_config
+        run_cfg = json.loads(results_path.read_text(encoding="utf-8"))["config"]
+        n_adv = int(json.loads(results_path.read_text(encoding="utf-8")).get("n_adversaries", 1))
+        specs = make_rollout_specs_from_config(run_cfg, n_adversaries=n_adv)
     spec = next(s for s in specs if s.rollout_index == rollout_index)
 
     # Reconstruct artefact path

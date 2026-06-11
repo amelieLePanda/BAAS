@@ -18,7 +18,11 @@ from __future__ import annotations
 
 import json
 import logging
+import multiprocessing
+import os
 import time
+from concurrent.futures import ProcessPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -75,77 +79,95 @@ def _measures(
     return d_norm, ttci_norm
 
 
-def _train_burst(
-    *,
-    adapter: EnvAdapter,
-    ego_policy: EgoPolicy,
-    env_cfg: Any,
-    cfg: QDRLConfig,
-    r_critical: float,
-    r_adv_close: float,
-    r_adv_nuis: float,
-    burst_steps: int,
-    seed: int,
-    out_path: Path,
-) -> Path:
-    """Train a PPO adversary for burst_steps and save to out_path."""
+@dataclass
+class _BurstTask:
+    ego_policy_path: str
+    env_cfg: Any
+    cfg: QDRLConfig
+    r_critical: float
+    r_adv_close: float
+    r_adv_nuis: float
+    burst_steps: int
+    seed: int
+    out_path: Path
+
+
+def _train_burst_worker(task: _BurstTask) -> Path:
+    """Train one burst PPO adversary. Runs inside a worker process.
+
+    Reconstructs adapter and ego policy from paths so no unpicklable objects
+    cross the process boundary. Seed is set deterministically inside the worker.
+    Device is always CPU: parallel workers each own one core; GPU sharing across
+    8 processes would cause memory contention with no throughput benefit for
+    MlpPolicy on small environments.
+    """
+    import numpy as np
+    import torch
+    torch.set_num_threads(1)  # prevent variable reduction order across workers
+    torch.manual_seed(task.seed)
+    np.random.seed(task.seed % (2 ** 31))
+
     from stable_baselines3 import PPO
     from stable_baselines3.common.env_util import make_vec_env
 
+    from baas.adapters.highway_env.adapter import HighwayEnvAdapter
+    from baas.core.ego_policy import DQNEgoPolicy
     from baas.methods.ppo_adversary.config import PPOAdvConfig
     from baas.methods.ppo_adversary.train import AdversaryVsEgoEnv
 
+    adapter = HighwayEnvAdapter()
+    ego_policy = DQNEgoPolicy(task.ego_policy_path, device="cpu")
+
     ppo_cfg = PPOAdvConfig(
-        n_adversaries=cfg.n_adversaries,
-        total_timesteps=burst_steps,
-        lr=cfg.lr,
-        gamma=cfg.gamma,
-        gae_lambda=cfg.gae_lambda,
-        ent_coef=cfg.ent_coef,
-        clip_range=cfg.clip_range,
-        batch_size=cfg.ppo_batch_size,
-        seed=seed,
+        n_adversaries=task.cfg.n_adversaries,
+        total_timesteps=task.burst_steps,
+        lr=task.cfg.lr,
+        gamma=task.cfg.gamma,
+        gae_lambda=task.cfg.gae_lambda,
+        ent_coef=task.cfg.ent_coef,
+        clip_range=task.cfg.clip_range,
+        batch_size=task.cfg.ppo_batch_size,
+        seed=task.seed,
     )
 
-    critical_dist = float(getattr(env_cfg, "critical_dist", 6.0))
-    nuisance_dist = float(getattr(env_cfg, "nuisance_dist", 12.0))
+    critical_dist = float(getattr(task.env_cfg, "critical_dist", 6.0))
+    nuisance_dist = float(getattr(task.env_cfg, "nuisance_dist", 12.0))
 
     def _make():
         return AdversaryVsEgoEnv(
             adapter=adapter,
             ego_policy=ego_policy,
-            env_cfg=env_cfg,
+            env_cfg=task.env_cfg,
             cfg=ppo_cfg,
-            seed=seed,
+            seed=task.seed,
             critical_dist=critical_dist,
             nuisance_dist=nuisance_dist,
-            r_critical=r_critical,
-            r_adv_crash_close=r_adv_close,
-            r_adv_crash_nuisance=r_adv_nuis,
+            r_critical=task.r_critical,
+            r_adv_crash_close=task.r_adv_close,
+            r_adv_crash_nuisance=task.r_adv_nuis,
         )
 
-    venv = make_vec_env(_make, n_envs=int(cfg.n_envs), seed=int(seed))
-
-    horizon = int(getattr(env_cfg, "horizon_steps", 240))
+    venv = make_vec_env(_make, n_envs=1, seed=task.seed)
+    horizon = int(getattr(task.env_cfg, "horizon_steps", 240))
     model = PPO(
         policy="MlpPolicy",
         env=venv,
-        learning_rate=cfg.lr,
-        n_steps=max(cfg.ppo_n_steps, horizon),
-        batch_size=cfg.ppo_batch_size,
-        gamma=cfg.gamma,
-        gae_lambda=cfg.gae_lambda,
-        ent_coef=cfg.ent_coef,
-        clip_range=cfg.clip_range,
+        learning_rate=task.cfg.lr,
+        n_steps=max(task.cfg.ppo_n_steps, horizon),
+        batch_size=task.cfg.ppo_batch_size,
+        gamma=task.cfg.gamma,
+        gae_lambda=task.cfg.gae_lambda,
+        ent_coef=task.cfg.ent_coef,
+        clip_range=task.cfg.clip_range,
         verbose=0,
-        device=cfg.device,
-        seed=int(seed),
+        device="cpu",
+        seed=task.seed,
     )
-    model.learn(total_timesteps=int(burst_steps))
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    model.save(str(out_path))
+    model.learn(total_timesteps=int(task.burst_steps))
+    task.out_path.parent.mkdir(parents=True, exist_ok=True)
+    model.save(str(task.out_path))
     venv.close()
-    return out_path
+    return task.out_path
 
 
 def _eval_policy(
@@ -279,6 +301,8 @@ def run_qdrl(
     seed: int = 0,
     env_cfg: Any = None,
     dist_max: float = _DIST_MAX_DEFAULT,
+    ego_policy_path: str = "",
+    max_workers: Optional[int] = None,
 ) -> None:
     """Run QD-RL and write the final archive to output_dir.
 
@@ -342,35 +366,48 @@ def run_qdrl(
     ]
     sched = Scheduler(archive, emitters)
 
+    n_workers = max_workers if max_workers is not None else min(
+        int(cfg.n_emitters) * int(cfg.emitter_batch_size),
+        os.cpu_count() or 1,
+    )
+    logger.info("QD-RL using %d parallel workers (cpu)", n_workers)
+
     rng = np.random.default_rng(int(seed) + 12345)
     meta: Dict[bytes, Dict[str, Any]] = {}
     t0 = time.time()
 
     for it in range(int(cfg.n_iters)):
         sols = sched.ask()
-        objs: List[float] = []
-        meas: List[np.ndarray] = []
+        sols_arr = [np.asarray(s, dtype=np.float32) for s in sols]
 
-        for j, sol in enumerate(sols):
-            sol = np.asarray(sol, dtype=np.float32)
-            r_critical, r_adv_close, r_adv_nuis = float(sol[0]), float(sol[1]), float(sol[2])
-
+        # Build one task per candidate. Seeds are derived deterministically
+        # inside each worker so results are reproducible regardless of
+        # which worker finishes first.
+        tasks = []
+        for j, sol in enumerate(sols_arr):
             cand_seed = int(seed) + it * 10_000 + j * 100
-            policy_path = policies_dir / f"it{it:04d}_j{j:02d}.zip"
-
-            _train_burst(
-                adapter=adapter,
-                ego_policy=ego_policy,
+            tasks.append(_BurstTask(
+                ego_policy_path=ego_policy_path,
                 env_cfg=env_cfg,
                 cfg=cfg,
-                r_critical=r_critical,
-                r_adv_close=r_adv_close,
-                r_adv_nuis=r_adv_nuis,
+                r_critical=float(sol[0]),
+                r_adv_close=float(sol[1]),
+                r_adv_nuis=float(sol[2]),
                 burst_steps=int(cfg.burst_steps),
                 seed=cand_seed,
-                out_path=policy_path,
-            )
+                out_path=policies_dir / f"it{it:04d}_j{j:02d}.zip",
+            ))
 
+        # Train all candidates in parallel; collect in fixed candidate order.
+        # spawn avoids deadlocks from PyTorch background threads inherited by fork.
+        _ctx = multiprocessing.get_context("spawn")
+        with ProcessPoolExecutor(max_workers=n_workers, mp_context=_ctx) as executor:
+            policy_paths = list(executor.map(_train_burst_worker, tasks))
+
+        # Sequential eval and archive insertion — fixed order preserves determinism.
+        objs: List[float] = []
+        meas: List[np.ndarray] = []
+        for j, (sol, policy_path) in enumerate(zip(sols_arr, policy_paths)):
             ev = _eval_policy(
                 policy_path=policy_path,
                 specs=specs,
@@ -394,11 +431,11 @@ def run_qdrl(
                     "policy_path": str(policy_path),
                     "summary": ev["summary"],
                     "train_cfg": {
-                        "r_critical": r_critical,
-                        "r_adv_crash_close": r_adv_close,
-                        "r_adv_crash_nuisance": r_adv_nuis,
+                        "r_critical": float(sol[0]),
+                        "r_adv_crash_close": float(sol[1]),
+                        "r_adv_crash_nuisance": float(sol[2]),
                         "burst_steps": cfg.burst_steps,
-                        "seed": cand_seed,
+                        "seed": int(seed) + it * 10_000 + j * 100,
                     },
                 }
 
