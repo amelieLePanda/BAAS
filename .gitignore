@@ -11,7 +11,8 @@ venv/
 env/
 
 # Folders
-runs/
+runs/*
+!runs/catalogue.json
 bin/
 _garbage/
 

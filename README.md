@@ -2,7 +2,7 @@
 
 A reproducible benchmarking framework for adversarial scenario generation in autonomous driving validation. Five adversarial paradigms are compared under identical conditions against a frozen ego policy in a highway driving environment.
 
-**Paper:** C. M.-L. Frischknecht-Gruber, M. Reif, A. Fischer. *BAAS: Benchmarking Adversarial Agent Strategies. A Comparative Study of Gradient-based, Reinforcement, and Evolutionary Paradigms for Safety-Critical Scenario Generation.* Proc. 36th European Safety and Reliability Conference (ESREL 2026)
+**Paper:** C. Frischknecht-Gruber, M. Reif, A. Fischer. *BAAS: Benchmarking Adversarial Agent Strategies. A Comparative Study of Gradient-based, Reinforcement, and Evolutionary Paradigms for Safety-Critical Scenario Generation.* Proc. 36th European Safety and Reliability Conference (ESREL 2026)
 
 ---
 
@@ -107,6 +107,10 @@ TBD GIF
 ## Dataset Release
 
 The scenario catalogue (`runs/catalogue.json`) records every evaluated rollout across all methods. It is a flat JSON array, one object per rollout.
+
+### Dataset Availability
+
+The scenario catalogue (`runs/catalogue.json`) is included in this repository. The full artefacts needed to replay scenarios (policy checkpoints, MAP-Elites/QD-RL archives, and the frozen ego policy) are available on request from xfig@zhaw.ch.
 
 ### Catalogue schema
 
@@ -285,7 +289,7 @@ can be omitted, as it is only needed for the racetrack/parking envs, not the hig
   title     = {{BAAS}: Benchmarking Adversarial Agent Strategies ---
                A Comparative Study of Gradient-based, Reinforcement,
                and Evolutionary Paradigms for Safety-Critical Scenario Generation},
-  author    = {Frischknecht-Gruber, Carmen Mei-Ling and Reif, Monika and Fischer, Andreas},
+  author    = {Frischknecht-Gruber, C. M. and Reif, Monika and Fischer, Andreas},
   booktitle = {Proceedings of the 36th European Safety and Reliability Conference (ESREL 2026)},
   year      = {2026},
   publisher = {Research Publishing}
