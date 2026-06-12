@@ -1,7 +1,5 @@
 # BAAS: Benchmarking Adversarial Agent Strategies
 
-> **DRAFT.** Results for QD-RL are pending a full rerun. This README will be updated once the final experiment is complete.
-
 A reproducible benchmarking framework for adversarial scenario generation in autonomous driving validation. Five adversarial paradigms are compared under identical conditions against a frozen ego policy in a highway driving environment.
 
 **Paper:** C. M.-L. Frischknecht-Gruber, M. Reif, A. Fischer. *BAAS: Benchmarking Adversarial Agent Strategies. A Comparative Study of Gradient-based, Reinforcement, and Evolutionary Paradigms for Safety-Critical Scenario Generation.* Proc. 36th European Safety and Reliability Conference (ESREL 2026)
@@ -29,46 +27,80 @@ Results below are from extended experiment runs (May–June 2026), superseding t
 | Method | p_coll | Mean TTCI_adv (steps) |
 |---|---|---|
 | Parameter Sweep | 0.633 | - |
-| KING-light | 0.433 | 114.9 |
+| KING-light | 0.447 ± 0.058 | 120.8 ± 18.9 |
 | PPO Adversary | 0.633 | 78.2 |
 | MAP-Elites | 0.500 | 140.4 |
-| QD-RL | *pending* | *pending* |
+| QD-RL | 0.767 | 84.9 |
 
 ### Feasibility and Plausibility
 
 | Method | Feasibility | Max Adv Jerk (m/s³) |
 |---|---|---|
 | Parameter Sweep | - | - |
-| KING-light | 0.570 | 43.3 |
+| KING-light | 0.561 ± 0.051 | 43.8 ± 5.2 |
 | PPO Adversary | 0.263 | 53.9 |
 | MAP-Elites | 0.593 | 38.3 |
-| QD-RL | *pending* | *pending* |
+| QD-RL | 0.313 | 38.3 |
 
 Feasibility = fraction of fixed-perturbation reruns where the ego avoids terminal failure. Higher feasibility means the scenario is challenging but solvable, which is the target property for V&V-relevant scenarios.
 
-### Diversity in φ-space (evaluation rollouts)
+### Table 2: Behavioural Diversity (evaluation rollouts)
 
 | Method | Coverage (φ) | Entropy (φ) | Diversity Score |
 |---|---|---|---|
 | Parameter Sweep | - | - | - |
-| KING-light | 0.140 | 0.528 | 0.334 |
+| KING-light | 0.114 ± 0.019 | 0.461 ± 0.051 | 0.287 ± 0.035 |
 | PPO Adversary | 0.110 | 0.470 | 0.290 |
 | MAP-Elites | 0.090 | 0.423 | 0.257 |
-| QD-RL | *pending* | *pending* | *pending* |
+| QD-RL | 0.180 | 0.599 | 0.390 |
+
+Computed via `phi_coverage_entropy()` over the φ-outcomes of the 30 shared evaluation rollouts (k=30, base_seed=0, env_seed_mode=jitter), using each method's single best-objective artefact (best-elite policy/sequence for MAP-Elites/QD-RL, single trained policy for KING-light/PPO Adversary). KING-light values are mean ± std across optimisation seeds 0-4; all other methods are single runs.
+
+### Table 3: Archive-level Diversity (full archive)
+
+| Method | Archive Cells | Coverage (φ) | Entropy (φ) | Diversity Score |
+|---|---|---|---|---|
+| MAP-Elites | 100 | 0.970 | 0.991 | 0.980 |
+| QD-RL | 55 | 0.530 | 0.859 | 0.695 |
+
+Computed by applying `phi_coverage_entropy()` to the denormalised behavioural measures of every occupied cell in each method's own archive (10×10 grid, same `PhiGridConfig` as Table 2), rather than just the single best-objective elite. Only MAP-Elites and QD-RL maintain an archive; the other methods are not shown here.
+
+> **Note on Table 3 discretisation**: "Archive Cells" counts occupied cells in each method's own 10×10 `ribs` archive (MAP-Elites: 100/100, QD-RL: 55/100). "Coverage (φ)" instead re-bins each cell's denormalised (dist, TTCI) measures through `bin_phi()`, the same φ-grid used in Table 2, and counts *unique* occupied φ-bins: 97/100 for MAP-Elites and 53/100 for QD-RL. The small drops, from 100 to 97 and from 55 to 53, occur because `bin_phi`'s TTCI binning (`ti_frac = (ttci-1)/(H-1)`) uses slightly different bin edges than `ribs`' own grid index, so a handful of distinct archive cells land in the same φ-bin. This is a discretisation artefact of comparing two binning schemes, not a data-quality issue.
 
 ---
 
 > **Note on Results (Update to Published Paper)**
-> The extended runs (May–June 2026) supersede the values in the ESREL 2026 paper. Two systematic differences exist. First, jerk is now computed from kinematic replay traces at `dt = 0.5 s`, giving physically coherent values (16–54 m/s³). The paper's values (up to 1676 m/s³) were from an earlier implementation and are physically implausible. Second, QD-RL results are pending a full rerun under the revised configuration (10×10 archive, burst\_steps=25 000, ent\_coef=0.02). The paper's QD-RL feasibility of 0.767 was from a run that terminated early. All other method results are from complete runs.
+> The extended runs (May to June 2026) supersede the values in the ESREL 2026 paper. Two systematic differences exist. First, jerk is now computed from kinematic replay traces at `dt = 0.5 s`, giving physically coherent values (16 to 54 m/s³). The paper's values (up to 1676 m/s³) were from an earlier implementation and are physically implausible. Second, the QD-RL results above are from a completed run under the revised configuration (10×10 archive, n\_iters=40, burst\_steps=25 000, n\_envs=1, ent\_coef=0.02). The paper's QD-RL feasibility of 0.767 was from a run that terminated early under a different configuration (25×25 archive, n\_iters=120 target); the completed run gives a feasibility of 0.313. All five method results above are from complete runs.
 
 > **Note on Feasibility Across Method Types**
 > Feasibility is estimated by replaying the same adversary 10 times with varied ego environment seeds and counting the fraction of reruns in which the ego survives. For active adversary methods (KING-light, PPO, MAP-Elites, QD-RL) the adversary controller is held fixed across reruns. For the parameter sweep, the background IDM/MOBIL vehicle is repositioned to the worst-case initial conditions found during the sweep. Feasibility there reflects how reliably that initial configuration leads to a critical outcome, not the robustness of a trained policy. The two feasibility values are comparable in direction (higher means harder but solvable) but differ structurally: parameter sweep feasibility characterises a static perturbation, whereas active-method feasibility characterises a trained adversarial behaviour.
+
+> **Note on Configuration Provenance**
+> The five methods were evaluated under three distinct `config_sha1` values: parameter_sweep and KING-light used `35e61bb0...`, MAP-Elites and PPO Adversary used `b57ef95c...`, and QD-RL used `1bf0f284...`. In every pairwise comparison, the diffs are confined to the `qdrl:` section of `configs/benchmark_v1.yaml` plus a cosmetic header-comment change ("MADS" → "BAAS"). The `env`, `rollouts`, `perturbation`, `incident`, `feasibility`, and `diversity` sections, which determine every metric in the tables above, are byte-identical across all three configs. The five methods are therefore directly cross-comparable.
 
 ---
 
 ## Example Scenarios
 
-*GIFs will be added here once selected from the final evaluation runs.*
+### Parameter Sweep
+
+TBD GIF
+
+### KING-light
+
+TBD GIF
+
+### PPO Adversary
+
+TBD GIF
+
+### MAP-Elites
+
+TBD GIF
+
+### QD-RL
+
+TBD GIF
 
 ---
 
@@ -153,7 +185,7 @@ The extended runs revealed two systematic differences from the paper's reported 
 
 **Jerk values**: The paper reported Max Adv Jerk values of 1676 m/s³ (KING-light) and 961 m/s³ (MAP-Elites). The current implementation computes jerk from kinematic replay traces using `dt = 1/policy_frequency = 0.5 s`, yielding physically coherent values in the 16–54 m/s³ range. The paper's values were produced by an earlier implementation and are physically implausible for highway vehicles (comfort limit ~6 m/s³, emergency limit ~60–100 m/s³). The conceptual ordering is preserved: QD-RL still produces the lowest adversary jerk of all active methods.
 
-**QD-RL feasibility**: The paper reported QD-RL feasibility of 0.767, based on a run that terminated early. The new run uses an improved configuration (10×10 archive, burst_steps=25 000, n_envs=4, ent_coef=0.02) and will report updated values once complete.
+**QD-RL feasibility**: The paper reported QD-RL feasibility of 0.767 (Table 4, "Feas." column, not the p_collision of 0.233 in Table 1). That run terminated early (25×25 archive, n_iters=120 target, stopped incomplete). The completed run under the revised configuration (10×10 archive, n_iters=40, burst_steps=25 000, n_envs=1, ent_coef=0.02) gives a feasibility of 0.313, substantially lower than the early-terminated estimate and now in the same range as PPO Adversary (0.263) rather than the higher-feasibility MAP-Elites/KING-light methods.
 
 **PPO terminal reward**: The paper defines the terminal reward on ego collision. In the implementation it fires on any critical incident, including proximity-only triggers. This is deliberate and produces a slightly more aggressive adversary during training. It does not affect evaluation metrics, which use the shared neutral evaluation path.
 
@@ -219,14 +251,30 @@ QD-RL is the most compute-intensive method. Recommended settings (already set in
 
 ```
 burst_steps: 25000   # training steps per candidate
-n_envs: 4            # parallel environments (use SubprocVecEnv)
+n_envs: 1            # one env per worker process
 archive_grid_dims: [10, 10]
-n_iters: 80
+n_iters: 40
 ent_coef: 0.02
-device: auto         # set to "cuda" if GPU is available
+device: cpu          # workers are CPU-only by design
 ```
 
-Expected wall time: ~8–12 hours on a modern CPU node, ~4–6 hours with GPU.
+Each iteration's candidates are trained in parallel across CPU worker processes via
+`ProcessPoolExecutor`, controlled by `--max-workers` (default: `min(n_candidates, cpu_count)`).
+Archive evaluation and insertion remain sequential. The method is CPU-only by design. There
+is no GPU path.
+
+```
+python baas/scripts/run_qdrl.py \
+    --config configs/benchmark_v1.yaml \
+    --ego-policy pretrained/frozen_model_dqn_cnn.zip \
+    --output runs/qdrl/run_001 \
+    --max-workers 8
+```
+
+Expected wall time: ~16 hours on a CPU node with 16 workers.
+
+On a CPU-only cluster, install the CPU build of torch (use the PyTorch CPU index-url). `box2d-py`
+can be omitted, as it is only needed for the racetrack/parking envs, not the highway scenario used here.
 
 ---
 
