@@ -166,6 +166,7 @@ def run_episode(
 
     ego_action_log: List[int] = []
     adv_action_logs: List[List[int]] = [[] for _ in advs]
+    reward_log: List[float] = []
 
     frames: Optional[List[np.ndarray]] = [] if record_frames else None
     if record_frames:
@@ -346,6 +347,7 @@ def run_episode(
 
         obs, reward, terminated, truncated, _info = env.step(action)
         episode_return += float(reward)
+        reward_log.append(float(reward))
 
         if record_frames:
             for adv in advs:
@@ -483,4 +485,5 @@ def run_episode(
         ego_actions=ego_actions_arr,
         adv_actions=adv_actions_mat,
         frames=frames,
+        rewards=np.asarray(reward_log, dtype=np.float32),
     )

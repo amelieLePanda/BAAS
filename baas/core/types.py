@@ -74,3 +74,4 @@ class EpisodeResult:
     adv_actions: np.ndarray
 
     frames: Optional[List[np.ndarray]] = None
+    rewards: Optional[np.ndarray] = None

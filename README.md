@@ -84,23 +84,58 @@ Computed by applying `phi_coverage_entropy()` to the denormalised behavioural me
 
 ### Parameter Sweep
 
-TBD GIF
+![Parameter Sweep example](docs/gifs/parameter_sweep_s0_018.gif)
+
+*Degenerate difficulty — scenario `parameter_sweep_s0_018`*
 
 ### KING-light
 
-TBD GIF
+![KING-light example, hardcore](docs/gifs/king_light_s0_000.gif)
+
+*Hardcore difficulty — scenario `king_light_s0_000`*
+
+![KING-light example, hard](docs/gifs/king_light_s0_010.gif)
+
+*Hard difficulty — scenario `king_light_s0_010`*
 
 ### PPO Adversary
 
-TBD GIF
+![PPO Adversary example, hardcore](docs/gifs/ppo_adversary_s0_000.gif)
+
+*Hardcore difficulty — scenario `ppo_adversary_s0_000`*
+
+![PPO Adversary example, hardcore](docs/gifs/ppo_adversary_s0_001.gif)
+
+*Hardcore difficulty — scenario `ppo_adversary_s0_001`*
+
+![PPO Adversary example, hard](docs/gifs/ppo_adversary_s0_002.gif)
+
+*Hard difficulty — scenario `ppo_adversary_s0_002`*
 
 ### MAP-Elites
 
-TBD GIF
+![MAP-Elites example](docs/gifs/map_elites_s0_024.gif)
+
+*Hard difficulty — scenario `map_elites_s0_024`*
 
 ### QD-RL
 
-TBD GIF
+QD-RL adversaries are optimised to close from far behind/ahead; in these
+scenarios the adversary approaches from off-screen and the collision occurs at
+the moment it enters the camera frame, so it appears red (post-crash) on entry
+rather than yellow (pre-crash).
+
+![QD-RL example, hardcore](docs/gifs/qdrl_s0_001.gif)
+
+*Hardcore difficulty — scenario `qdrl_s0_001`*
+
+![QD-RL example, hard](docs/gifs/qdrl_s0_014.gif)
+
+*Hard difficulty — scenario `qdrl_s0_014`*
+
+![QD-RL example, hard](docs/gifs/qdrl_s0_024.gif)
+
+*Hard difficulty — scenario `qdrl_s0_024`*
 
 ---
 

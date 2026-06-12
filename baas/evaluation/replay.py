@@ -91,24 +91,21 @@ def render_episode_to_gif(
     return result
 
 
-def replay_by_scenario_id(
+def resolve_replay_inputs(
     scenario_id: str,
     catalogue_path: Path,
     adapter: EnvAdapter,
-    ego_policy: EgoPolicy,
-    thresholds: IncidentThresholds,
-    output_path: Path,
-    *,
-    env_cfg: Any = None,
     device: str = "cpu",
-    fps: int = 10,
-) -> EpisodeResult:
-    """Replay a scenario from the catalogue and save to GIF.
+) -> "tuple[dict, RolloutSpec, List[AdvController], Optional[Callable[[Any], None]], Any, IncidentThresholds]":
+    """Resolve everything needed to deterministically re-run a cataloged scenario.
 
     Looks up scenario_id, reconstructs adversary controllers from the stored
-    artefact, finds the matching RolloutSpec, and renders to output_path.
+    artefact, finds the matching RolloutSpec, and derives env_cfg/thresholds
+    from the run's own stored config. Returns
+    (row, spec, adv_controllers, post_reset_fn, env_cfg, thresholds).
     """
     from baas.evaluation.benchmark import load_rollout_specs
+    from baas.evaluation.config_loader import config_from_dict
 
     catalogue = json.loads(Path(catalogue_path).read_text(encoding="utf-8"))
     row = next((r for r in catalogue if r["scenario_id"] == scenario_id), None)
@@ -121,6 +118,12 @@ def replay_by_scenario_id(
     results_path = release_dir / row["results_path"]
     run_dir = results_path.parent
 
+    results_json = json.loads(results_path.read_text(encoding="utf-8"))
+    run_cfg = results_json["config"]
+    bundle = config_from_dict(run_cfg)
+    env_cfg = bundle.env
+    thresholds = bundle.thresholds
+
     # Load the RolloutSpec for this rollout; fall back to regenerating from config
     # if rollout_specs.json was not saved by the run (older ppo_adversary / parameter_sweep runs).
     specs_path = run_dir / "rollout_specs.json"
@@ -128,8 +131,7 @@ def replay_by_scenario_id(
         specs = load_rollout_specs(specs_path)
     else:
         from baas.evaluation.benchmark import make_rollout_specs_from_config
-        run_cfg = json.loads(results_path.read_text(encoding="utf-8"))["config"]
-        n_adv = int(json.loads(results_path.read_text(encoding="utf-8")).get("n_adversaries", 1))
+        n_adv = int(results_json.get("n_adversaries", 1))
         specs = make_rollout_specs_from_config(run_cfg, n_adversaries=n_adv)
     spec = next(s for s in specs if s.rollout_index == rollout_index)
 
@@ -150,18 +152,29 @@ def replay_by_scenario_id(
         else:
             raise FileNotFoundError(f"Artefact not found for {scenario_id}: {artefact_ref}")
 
-    elif method in ("ppo_adversary", "qdrl"):
+    elif method == "ppo_adversary":
         from baas.evaluation.controllers import make_controllers_ppo
         if not artefact_path or not artefact_path.exists():
             raise FileNotFoundError(f"Checkpoint not found: {artefact_ref}")
         adv_controllers = make_controllers_ppo(artefact_path, device)(spec)
 
+    elif method == "qdrl":
+        from baas.evaluation.controllers import make_controllers_ppo
+        if not artefact_path or not artefact_path.exists():
+            raise FileNotFoundError(f"QD-RL archive not found: {artefact_ref}")
+        archive = json.loads(artefact_path.read_text(encoding="utf-8"))
+        cells = archive["archive"]["cells"]
+        best = max(cells, key=lambda c: float(c.get("objective", float("-inf"))))
+        policy_path = Path(best["policy_path"])
+        if not policy_path.exists():
+            policy_path = release_dir / best["policy_path"]
+        adv_controllers = make_controllers_ppo(policy_path, device)(spec)
+
     elif method == "map_elites":
         from baas.evaluation.controllers import make_controllers_map_elites
         if not artefact_path or not artefact_path.exists():
             raise FileNotFoundError(f"Archive not found: {artefact_ref}")
-        cfg = json.loads(results_path.read_text(encoding="utf-8"))["config"]
-        adv_controllers = make_controllers_map_elites(artefact_path, cfg, 1)(spec)
+        adv_controllers = make_controllers_map_elites(artefact_path, run_cfg, 1)(spec)
 
     elif method == "king_light":
         from baas.evaluation.controllers import make_controllers_action_seq
@@ -175,7 +188,32 @@ def replay_by_scenario_id(
     else:
         raise ValueError(f"Replay not implemented for method: {method}")
 
+    return row, spec, adv_controllers, post_reset_fn, env_cfg, thresholds
+
+
+def replay_by_scenario_id(
+    scenario_id: str,
+    catalogue_path: Path,
+    adapter: EnvAdapter,
+    ego_policy: EgoPolicy,
+    thresholds: IncidentThresholds,
+    output_path: Path,
+    *,
+    env_cfg: Any = None,
+    device: str = "cpu",
+    fps: int = 10,
+) -> EpisodeResult:
+    """Replay a scenario from the catalogue and save to GIF.
+
+    Looks up scenario_id, reconstructs adversary controllers from the stored
+    artefact, finds the matching RolloutSpec, and renders to output_path.
+    """
+    _row, spec, adv_controllers, post_reset_fn, resolved_env_cfg, _thresholds = resolve_replay_inputs(
+        scenario_id, catalogue_path, adapter, device=device,
+    )
+
     return render_episode_to_gif(
         spec, adapter, ego_policy, adv_controllers, thresholds, output_path,
-        env_cfg=env_cfg, fps=fps, post_reset_fn=post_reset_fn,
+        env_cfg=env_cfg if env_cfg is not None else resolved_env_cfg,
+        fps=fps, post_reset_fn=post_reset_fn,
     )
