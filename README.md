@@ -20,7 +20,7 @@ A reproducible benchmarking framework for adversarial scenario generation in aut
 
 ## Results
 
-Results below are from extended experiment runs (May–June 2026), superseding the published paper values. See the **Corrections** section for details on numerical differences.
+Results below are from extended experiment runs (May-June 2026), superseding the published paper values. See the **Corrections** section for details on numerical differences.
 
 ### Effectiveness
 
@@ -86,37 +86,37 @@ Computed by applying `phi_coverage_entropy()` to the denormalised behavioural me
 
 ![Parameter Sweep example](docs/gifs/parameter_sweep_s0_018.gif)
 
-*Degenerate difficulty — scenario `parameter_sweep_s0_018`*
+*Degenerate difficulty - scenario `parameter_sweep_s0_018`*
 
 ### KING-light
 
 ![KING-light example, hardcore](docs/gifs/king_light_s0_000.gif)
 
-*Hardcore difficulty — scenario `king_light_s0_000`*
+*Hardcore difficulty - scenario `king_light_s0_000`*
 
 ![KING-light example, hard](docs/gifs/king_light_s0_010.gif)
 
-*Hard difficulty — scenario `king_light_s0_010`*
+*Hard difficulty - scenario `king_light_s0_010`*
 
 ### PPO Adversary
 
 ![PPO Adversary example, hardcore](docs/gifs/ppo_adversary_s0_000.gif)
 
-*Hardcore difficulty — scenario `ppo_adversary_s0_000`*
+*Hardcore difficulty - scenario `ppo_adversary_s0_000`*
 
 ![PPO Adversary example, hardcore](docs/gifs/ppo_adversary_s0_001.gif)
 
-*Hardcore difficulty — scenario `ppo_adversary_s0_001`*
+*Hardcore difficulty - scenario `ppo_adversary_s0_001`*
 
 ![PPO Adversary example, hard](docs/gifs/ppo_adversary_s0_002.gif)
 
-*Hard difficulty — scenario `ppo_adversary_s0_002`*
+*Hard difficulty - scenario `ppo_adversary_s0_002`*
 
 ### MAP-Elites
 
 ![MAP-Elites example](docs/gifs/map_elites_s0_024.gif)
 
-*Hard difficulty — scenario `map_elites_s0_024`*
+*Hard difficulty - scenario `map_elites_s0_024`*
 
 ### QD-RL
 
@@ -127,15 +127,15 @@ rather than yellow (pre-crash).
 
 ![QD-RL example, hardcore](docs/gifs/qdrl_s0_001.gif)
 
-*Hardcore difficulty — scenario `qdrl_s0_001`*
+*Hardcore difficulty - scenario `qdrl_s0_001`*
 
 ![QD-RL example, hard](docs/gifs/qdrl_s0_014.gif)
 
-*Hard difficulty — scenario `qdrl_s0_014`*
+*Hard difficulty - scenario `qdrl_s0_014`*
 
 ![QD-RL example, hard](docs/gifs/qdrl_s0_024.gif)
 
-*Hard difficulty — scenario `qdrl_s0_024`*
+*Hard difficulty - scenario `qdrl_s0_024`*
 
 ---
 
@@ -222,7 +222,7 @@ result = replay_by_scenario_id(
 
 The extended runs revealed two systematic differences from the paper's reported values:
 
-**Jerk values**: The paper reported Max Adv Jerk values of 1676 m/s³ (KING-light) and 961 m/s³ (MAP-Elites). The current implementation computes jerk from kinematic replay traces using `dt = 1/policy_frequency = 0.5 s`, yielding physically coherent values in the 16–54 m/s³ range. The paper's values were produced by an earlier implementation and are physically implausible for highway vehicles (comfort limit ~6 m/s³, emergency limit ~60–100 m/s³). The conceptual ordering is preserved: QD-RL still produces the lowest adversary jerk of all active methods.
+**Jerk values**: The paper reported Max Adv Jerk values of 1676 m/s³ (KING-light) and 961 m/s³ (MAP-Elites). The current implementation computes jerk from kinematic replay traces using `dt = 1/policy_frequency = 0.5 s`, yielding physically coherent values in the 16-54 m/s³ range. The paper's values were produced by an earlier implementation and are physically implausible for highway vehicles (comfort limit ~6 m/s³, emergency limit ~60-100 m/s³). The conceptual ordering is preserved: QD-RL still produces the lowest adversary jerk of all active methods.
 
 **QD-RL feasibility**: The paper reported QD-RL feasibility of 0.767 (Table 4, "Feas." column, not the p_collision of 0.233 in Table 1). That run terminated early (25×25 archive, n_iters=120 target, stopped incomplete). The completed run under the revised configuration (10×10 archive, n_iters=40, burst_steps=25 000, n_envs=1, ent_coef=0.02) gives a feasibility of 0.313, substantially lower than the early-terminated estimate and now in the same range as PPO Adversary (0.263) rather than the higher-feasibility MAP-Elites/KING-light methods.
 
@@ -321,7 +321,7 @@ can be omitted, as it is only needed for the racetrack/parking envs, not the hig
 
 ```bibtex
 @inproceedings{frischknecht2026baas,
-  title     = {{BAAS}: Benchmarking Adversarial Agent Strategies ---
+  title     = {{BAAS}: Benchmarking Adversarial Agent Strategies,
                A Comparative Study of Gradient-based, Reinforcement,
                and Evolutionary Paradigms for Safety-Critical Scenario Generation},
   author    = {Frischknecht-Gruber, C. M. and Reif, Monika and Fischer, Andreas},
