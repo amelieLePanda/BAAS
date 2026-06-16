@@ -120,8 +120,8 @@ Computed by applying `phi_coverage_entropy()` to the denormalised behavioural me
 
 ### QD-RL
 
-QD-RL adversaries are optimised to close from far behind/ahead; in these
-scenarios the adversary approaches from off-screen and the collision occurs at
+QD-RL adversaries are optimised at times very close from far behind/ahead, in these
+scenarios, the adversary approaches from off-screen, and the collision occurs at
 the moment it enters the camera frame, so it appears red (post-crash) on entry
 rather than yellow (pre-crash).
 
